@@ -1011,7 +1011,7 @@ class MarketUI {
        width:600,
        height:280,
      });
-     this.stop_order_list_dlg = $("#-order-list").dialog({
+     this.stop_order_list_dlg = $("#stop-order-list-dlg").dialog({
        autoOpen: false,
        closeOnEscape: false,
        dialogClass:"noclose notitle",
