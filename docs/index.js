@@ -479,7 +479,6 @@ class Market {
      } else {
        //add
        var newPoint = this.gen_Point(id, _dt, _high, _low, _open, _close, _vol);
-//??       $(_chart).iguanaChart("addPoint", newPoint);
        $(_chart).data("iguanaChart").addPoint(newPoint);
        this.lastPoints[_chart] = {dt:_dt,
                                   high: _high,    low: _low,
@@ -507,7 +506,6 @@ class Market {
        this.newCandle(".iChart_m5", "M5", DT.m5, high, low, open, close, vol);
      } else {
        var newPoint = this.gen_Point(this.ticker, DT.m5, high, low, open, close, vol);
-//??       $(".iChart_m5").iguanaChart("addPoint", newPoint);
        $(".iChart_m5").data("iguanaChart").addPoint(newPoint);
      }
 
@@ -574,7 +572,6 @@ class Market {
        this.newCandle(".iChart_m5i", "M5", DT.m5, high, low, open, close, vol);
      } else {
        var newPoint = this.gen_Point(this.iticker, DT.m5, high, low, open, close, vol);
-//??       $(".iChart_m5i").iguanaChart("addPoint", newPoint);
        $(".iChart_m5i").data("iguanaChart").addPoint(newPoint);
      }
 
@@ -952,7 +949,7 @@ class MarketUI {
 
      this.order_dlg = $("#order-dlg").dialog({
        autoOpen: false,
-       width:550,
+       width:600,
        height:550,
        buttons: {
          "Execute": () => {
@@ -970,7 +967,7 @@ class MarketUI {
 
      this.edit_order_dlg = $("#edit-order-dlg").dialog({
        autoOpen: false,
-       width:550,
+       width:600,
        height:320,
        buttons: {
          "OK": () => {
@@ -988,7 +985,7 @@ class MarketUI {
 
      this.edit_stop_dlg = $("#edit-stop-dlg").dialog({
        autoOpen: false,
-       width:550,
+       width:600,
        height:450,
        buttons: {
          "OK": () => {

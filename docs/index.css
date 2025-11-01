@@ -86,7 +86,7 @@ div.grid_book {
 div.grid_new_order1 {
   display: grid;
   grid-template-rows: 25px; /* 1fr*/
-  grid-template-columns: 80px 2fr 2fr;
+  grid-template-columns: 120px 2fr 2fr;
   grid-gap: 5px;
 }
 
