@@ -776,17 +776,18 @@ class Market {
        var dt_lbl = document.querySelector('#cur_date');
        dt_lbl.innerText = date2str(new Date(dtms));
 
-       $(".iChart_m5").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_H1&i2_TimePeriod=7&&i3=EMA_H1&i3_TimePeriod=14&i4=EMA_D1&i4_TimePeriod=7&&i5=EMA_D1&i5_TimePeriod=14&");
-       $(".iChart_h1").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_D1&i2_TimePeriod=7&&i3=EMA_D1&i3_TimePeriod=14&");
+       //--$(".iChart_m5").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_H1&i2_TimePeriod=7&&i3=EMA_H1&i3_TimePeriod=14&i4=EMA_D1&i4_TimePeriod=7&&i5=EMA_D1&i5_TimePeriod=14&");
+       //--$(".iChart_h1").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_D1&i2_TimePeriod=7&&i3=EMA_D1&i3_TimePeriod=14&");
+       $(".iChart_m5").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA&i2_TimePeriod=84&&i3=EMA&i3_TimePeriod=168");
+       $(".iChart_h1").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14");
        if (this.use_D1)
          $(".iChart_d1").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&");
 
        if (icur) {
          this.cur.idi = icur.id;
 
-//         $(".iChart_m5i").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_H1&i2_TimePeriod=7&&i3=EMA_H1&i3_TimePeriod=14&i4=EMA_D1&i4_TimePeriod=7&&i5=EMA_D1&i5_TimePeriod=14&&i6=EMA&i6_TimePeriod=200&&i7=EMA&i7_TimePeriod=20&");
-         $(".iChart_m5i").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_H1&i2_TimePeriod=7&&i3=EMA_H1&i3_TimePeriod=14&i4=EMA_D1&i4_TimePeriod=7&&i5=EMA_D1&i5_TimePeriod=14&");
-         $(".iChart_h1i").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_D1&i2_TimePeriod=7&&i3=EMA_D1&i3_TimePeriod=14&");
+         $(".iChart_m5i").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA&i2_TimePeriod=84&&i3=EMA&i3_TimePeriod=168");
+         $(".iChart_h1i").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14");
          if (this.use_D1)
            $(".iChart_d1i").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&");
        }
@@ -2160,8 +2161,6 @@ document.addEventListener('DOMContentLoaded', function()
 
      document.querySelector('#restore_state')
        .onclick = (e) => {mUI.restoreState() }
-//     document.querySelector('#rest_state')
-//       .onchange = (e) => {mUI.restoreState(e) }
 
      document.querySelector('#play')
        .onclick = (e) => { clickPlay(); }

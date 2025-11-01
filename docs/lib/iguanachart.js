@@ -2006,18 +2006,6 @@ iChart.indicators = {
             {"Code":"TimePeriod", "Name":_t('1296', 'Период'), "Value":14}
         ]
     },
-    "EMA_TIME":{
-        "type": 'TA_LIB',
-        "output": 1,
-        "name": _t('438', 'EMA (Экспоненциальное скользящее среднее TIME)'),
-        "value": "EMA_TIME",
-        "outputRegion": "price",
-        "description":_t('4812', 'Экспоненциальное скользящее среднее – это среднее значение данных, рассчитанное за некий период времени, причем последние дни имеют в вычислении больший вес.') + ' ' + '<a target="_blank" href="http://www.nettrader.ru/education/book/5396">' + _t('15840', 'Подробнее.') + '</a>',
-        "parameters":[
-            {"Code":"TimePeriod", "Name":_t('1296', 'Период'), "Value":20},
-            {"Code":"TimeEnd", "Name":_t('1296', 'TimeEnd'), "Value":1845}
-        ]
-    },
     "ENV":{
         "type": 'TA_LIB',
         "output": 2,
@@ -25298,22 +25286,9 @@ TA.EMA_H1._int_ema = function ( startIdx, endIdx, dataShape, optInTimePeriod, op
     * input.
     */
 
-   /* Skip the unstable period. Do the processing 
-    * but do not write it in the output.
-    */   
-//??????????????
-//??--   while( today <= startIdx )
-//??--      prevMA = ((dataShape[today++][this.Settings.CandleValueIdx]-prevMA)*optInK_1) + prevMA;
-
    /* Write the first value. */
    outReal[0] = prevMA;
    outIdx = 1;
-
-   /* Calculate the remaining range. */
-//??--   while( today <= endIdx ) {
-//??--      prevMA = ((dataShape[today++][this.Settings.CandleValueIdx]-prevMA)*optInK_1) + prevMA;
-//??--      outReal[outIdx++] = prevMA;
-//??--   }
 
    var prev_dt = 0;
    var dt = 0;
@@ -25470,7 +25445,6 @@ TA.EMA_D1._int_ema = function ( startIdx, endIdx, dataShape, optInTimePeriod, op
     * to calculate at least one output.
     */
    lookbackTotal = this._lookback( optInTimePeriod );
-//????
    lookbackTotal *= 12;
 
    /* Move up the start index if there is not
@@ -25544,22 +25518,9 @@ TA.EMA_D1._int_ema = function ( startIdx, endIdx, dataShape, optInTimePeriod, op
     * input.
     */
 
-   /* Skip the unstable period. Do the processing 
-    * but do not write it in the output.
-    */   
-//??????????????
-//??--   while( today <= startIdx )
-//??--      prevMA = ((dataShape[today++][this.Settings.CandleValueIdx]-prevMA)*optInK_1) + prevMA;
-
    /* Write the first value. */
    outReal[0] = prevMA;
    outIdx = 1;
-
-   /* Calculate the remaining range. */
-//??--   while( today <= endIdx ) {
-//??--      prevMA = ((dataShape[today++][this.Settings.CandleValueIdx]-prevMA)*optInK_1) + prevMA;
-//??--      outReal[outIdx++] = prevMA;
-//??--   }
 
    var prev_dt = 0;
    var dt = 0;
@@ -25649,215 +25610,6 @@ TA.EMA_D1.initChart = function (dataShape, hcOptions, ticker) {
 };
 
 TA.EMA_D1.SetSettings(TA.EMA_D1.DefaultSettings);
-
-
-/**********/
-//??======================================================================
-if (!!TA.INDICATOR_TEMPLATE)
-    TA.EMA_TIME = TA.INDICATOR_TEMPLATE.Create();
-else
-    TA.EMA_TIME = {};
-
-TA.EMA_TIME.name = 'EMA_TIME';
-TA.EMA_TIME.type = 'line';
-
-TA.EMA_TIME.DefaultSettings = {
-    TimePeriod: 20,
-    TimeEnd: 1845,
-    CandleValueIdx: TA.CLOSE,
-    CandleDate: TA.DATE,
-    CandleTime: TA.TIME,
-};
-
-TA.EMA_TIME.Settings = {};
-
-TA.EMA_TIME.calculate = function(startIdx, endIdx, dataShape, settings){
-     
-    var outReal = [];
-    
-    this.SetSettings(settings);
-
-    if (!startIdx)
-        startIdx = 0;
-
-    if (!endIdx)
-        endIdx = dataShape.length - 1;
-
-    if (startIdx < 0)
-        throw 'TA_OUT_OF_RANGE_START_INDEX';
-    if ((endIdx < 0) || (endIdx < startIdx))
-        throw 'TA_OUT_OF_RANGE_END_INDEX';
-
-    if (!dataShape || !dataShape.length)
-        throw 'TA_BAD_PARAM';
-
-    if (dataShape[0][TA.PER] > 60)
-        throw 'TA_BAD_PARAM';
-
-    if (!this.Settings.TimePeriod)
-        this.Settings.TimePeriod = 20;
-    else if ((this.Settings.TimePeriod < 2) || (this.Settings.TimePeriod > 100000))
-        throw 'TA_BAD_PARAM';
-
-    if (!this.Settings.TimeEnd)
-        this.Settings.TimePeriod = 1845;
-    else if ((this.Settings.TimePeriod < 0) || (this.Settings.TimePeriod > 2400))
-        throw 'TA_BAD_PARAM';
-
-    return this._int_ema(startIdx, endIdx, dataShape,
-        this.Settings.TimePeriod, this.Settings.TimeEnd,
-        TA.PER_TO_K(this.Settings.TimePeriod),
-        outReal);
-};
-
-TA.EMA_TIME._int_ema = function ( startIdx, endIdx, dataShape, optInTimePeriod, optTimeEnd, optInK_1, outReal ) {
-   var tempReal, prevMA;
-   var i, today, outIdx, lookbackTotal;
-   var self = this;
-
-   /* Ususally, optInK_1 = 2 / (optInTimePeriod + 1),
-    * but sometime there is exception. This
-    * is why both value are parameters.
-    */
-
-   /* Identify the minimum number of price bar needed
-    * to calculate at least one output.
-    */
-   lookbackTotal = this._lookback( optInTimePeriod );
-//??   lookbackTotal *= 12;
-
-   /* Move up the start index if there is not
-    * enough initial data.
-    */
-   if( startIdx < lookbackTotal )
-      startIdx = lookbackTotal;
-
-   /* Make sure there is still something to evaluate. */
-   if( startIdx > endIdx )
-   {
-      return outReal;
-   }
-
-   /* Do the EMA calculation using tight loops. */
-   
-   /* The first EMA is calculated differently. It
-    * then become the seed for subsequent TA.EMA_H1.
-    *
-    * The algorithm for this seed vary widely.
-    * Only 3 are implemented here:
-    *
-    * TA_MA_CLASSIC:
-    *    Use a simple MA of the first 'period'.
-    *    This is the approach most widely documented.
-    *
-    * TA_MA_METASTOCK:
-    *    Use first price bar value as a seed
-    *    from the begining of all the available
-    *    data.
-    *
-    * TA_MA_TRADESTATION:
-    *    Use 4th price bar as a seed, except when
-    *    period is 1 who use 2th price bar or something
-    *    like that... (not an obvious one...).
-    */
-
-   function getDT(ishape)
-   {
-     return parseInt(ishape[self.Settings.CandleTime].substring(0,4));
-   }
-
-   if( TA.TA_GLOBALS_COMPATIBILITY == TA.TA_COMPATIBILITY_DEFAULT )
-   {
-      today = startIdx-lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-         tempReal += dataShape[today++][this.Settings.CandleValueIdx];
-
-      prevMA = tempReal / optInTimePeriod;
-   }
-   else
-   {
-      prevMA = dataShape[0][this.Settings.CandleValueIdx];
-      today = 1;
-
-      /* !!! Tradestation not supported yet.
-      case TA_MA_TRADESTATION:
-         prevMA = inReal[startIdx-1];
-         if( optInTimePeriod == 1 )
-            VALUE_HANDLE_DEREF(outBegIdx)_0 = 1;
-         else
-            VALUE_HANDLE_DEREF(outBegIdx)_0 = 3;
-       */
-   }
-
-   /* At this point, prevMA is the first EMA (the seed for
-    * the rest).
-    * 'today' keep track of where the processing is within the
-    * input.
-    */
-
-   /* Skip the unstable period. Do the processing 
-    * but do not write it in the output.
-    */   
-//??????????????
-//??--   while( today <= startIdx )
-//??--      prevMA = ((dataShape[today++][this.Settings.CandleValueIdx]-prevMA)*optInK_1) + prevMA;
-
-   /* Write the first value. */
-   outReal[0] = prevMA;
-   outIdx = 1;
-
-   /* Calculate the remaining range. */
-//??--   while( today <= endIdx ) {
-//??--      prevMA = ((dataShape[today++][this.Settings.CandleValueIdx]-prevMA)*optInK_1) + prevMA;
-//??--      outReal[outIdx++] = prevMA;
-//??--   }
-
-   var MA = prevMA;
-
-   while( today <= endIdx ) {
-      var i = today++;
-      var cur_dt = getDT(dataShape[i]);
-
-      if (cur_dt <= optTimeEnd) {
-        prevMA = ((dataShape[i][this.Settings.CandleValueIdx]-prevMA)*optInK_1) + prevMA;
-
-        outReal[outIdx++] = prevMA;
-
-      } else {
-
-        outReal[outIdx++] = prevMA;
-      }
-   }
-
-   return outReal;
-};
-
-TA.EMA_TIME.getValue = function(dataShape, itemIdx, settings) {
-    
-};
-
-TA.EMA_TIME._lookback = function(optInTimePeriod) {
-    if ( !optInTimePeriod )
-        optInTimePeriod = this.Settings.TimePeriod || this.DefaultSettings.TimePeriod;
-    else if (( optInTimePeriod < 2) || ( optInTimePeriod > 100000))
-        return -1;
-
-
-    return optInTimePeriod - 1; // + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_EMA, Ema);
-};
-
-TA.EMA_TIME._S = function(startIdx, endIdx, dataShape, settings) {
-};
-
-TA.EMA_TIME.initChart = function (dataShape, hcOptions, ticker) {
-    INDICATOR_TEMPLATE.initChart.apply(this, arguments);
-    
-    
-};
-
-TA.EMA_TIME.SetSettings(TA.EMA_TIME.DefaultSettings);
 
 
 //??======================================================================
