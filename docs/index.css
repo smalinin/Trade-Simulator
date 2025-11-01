@@ -112,11 +112,10 @@ div.grid_load {
 }
 
 .m-label {
-/*    width: 50px;*/ /* Ширина */
-    text-align: right; /* Выравниваем по правому краю */
-    float: left; /* Выстраиваем элементы рядом */
-    margin-right: 10px; /* Расстояние от текста до текстового поля */
-    line-height: 25px; /* Выравниваем по высоте */
+    text-align: right;
+    float: left;
+    margin-right: 10px;
+    line-height: 25px;
    }
 
 .m-list-btn {

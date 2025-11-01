@@ -953,7 +953,7 @@ class MarketUI {
      this.order_dlg = $("#order-dlg").dialog({
        autoOpen: false,
        width:550,
-       height:470,
+       height:550,
        buttons: {
          "Execute": () => {
            var rc = self.call_exec_order();
@@ -971,7 +971,7 @@ class MarketUI {
      this.edit_order_dlg = $("#edit-order-dlg").dialog({
        autoOpen: false,
        width:550,
-       height:260,
+       height:320,
        buttons: {
          "OK": () => {
            var rc = self.call_edit_order();
@@ -989,7 +989,7 @@ class MarketUI {
      this.edit_stop_dlg = $("#edit-stop-dlg").dialog({
        autoOpen: false,
        width:550,
-       height:390,
+       height:450,
        buttons: {
          "OK": () => {
            var rc = self.call_edit_stop_order();
@@ -1012,7 +1012,7 @@ class MarketUI {
          my: "left bottom", at:"left bottom", of: window
        },
        width:600,
-       height:280,
+       height:350,
      });
      this.stop_order_list_dlg = $("#stop-order-list-dlg").dialog({
        autoOpen: false,
@@ -1022,7 +1022,7 @@ class MarketUI {
          my: "left+5 bottom+5", at:"right bottom", of: this.order_list_dlg
        },
        width:900,
-       height:280,
+       height:350,
      });
      this.status_dlg = $("#status-dlg").dialog({
        autoOpen: false,
@@ -1032,19 +1032,19 @@ class MarketUI {
          my: "left+40 bottom+5", at:"right bottom", of: this.stop_order_list_dlg
        },
        width:350,
-       height:280,
+       height:350,
      });
      this.save_trans_dlg = $("#save-trans-dlg").dialog({
        autoOpen: false,
        closeOnEscape: false,
        width:350,
-       height:100,
+       height:150,
      });
      this.save_eq_dlg = $("#save-eq-dlg").dialog({
        autoOpen: false,
        closeOnEscape: false,
        width:350,
-       height:100,
+       height:150,
      });
      
      // Initialize cached elements after DOM is ready
