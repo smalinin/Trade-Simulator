@@ -48,7 +48,6 @@ ul#tabs li a.selected {
 div.grid_ticker {
   height: 700px;
   display: grid;
-/*  grid-template-rows: 1px 650px; */
   grid-template-rows: 1px 640px; 
   grid-template-columns: 1fr 1fr;
   grid-gap: 5px;
@@ -57,22 +56,36 @@ div.grid_ticker {
 div.grid_ticker_2K {
   height: 1050px;
   display: grid;
-/*  grid-template-rows: 1px 650px; */
   grid-template-rows: 1px 990px; 
   grid-template-columns: 1fr 1fr;
   grid-gap: 5px;
 }
 
+div.flex_ticker {
+  display:flex; 
+  height:700px; 
+  flex-direction:row; 
+  gap:5px;
+}
+
+div.flex_ticker_2K {
+  display:flex; 
+  height:1050px; 
+  flex-direction:row; 
+  gap:5px;
+}
+
+
 div.chart_ticker {
   border: solid darkgray 2px;
   position: relative; 
-  height:675px;
+  height:690px;
 }
 
 div.chart_ticker_2K {
   border: solid darkgray 2px;
   position: relative; 
-  height:1030px;
+  height:1040px;
 }
 
 div.grid_book {

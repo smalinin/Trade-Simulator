@@ -17,6 +17,13 @@ function date2str(date) {
   return dts+" "+pad(date.getHours())+":"+pad(date.getMinutes())+":"+pad(date.getSeconds());
 }
 
+function debounce(fn, delay) {
+  let timer = null;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
 
 class Market {
   constructor() {
@@ -1873,6 +1880,14 @@ class MarketUI {
        init_chart(".iChart_m5i","I5", gm.iticker, true);
        init_chart(".iChart_h1i","H1", gm.iticker, true);
        init_chart(".iChart_d1i","D1", gm.iticker, true);
+     } else {
+       $('div.iChart_m5i').css('flex', '0')
+       $('div.iChart_h1i').css('flex', '0')
+       $('div.iChart_d1i').css('flex', '0')
+
+       $('.iChart_m5').data("iguanaChart").viewData.chart.resize()
+       $('.iChart_h1').data("iguanaChart").viewData.chart.resize()
+       $('.iChart_d1').data("iguanaChart").viewData.chart.resize()
      }
 
      gm.handleStart();
@@ -1885,10 +1900,10 @@ class MarketUI {
      var mode = document.querySelector('#l-screen option:checked').value;
 
      if (mode === "2K") {
-       var v = document.querySelectorAll('.grid_ticker');
+       var v = document.querySelectorAll('.flex_ticker');
        v.forEach((child) => {
-         child.classList.remove('grid_ticker');
-         child.classList.add('grid_ticker_2K');
+         child.classList.remove('flex_ticker');
+         child.classList.add('flex_ticker_2K');
        });
        var v = document.querySelectorAll('.chart_ticker');
        v.forEach((child) => {
@@ -2133,6 +2148,14 @@ document.addEventListener('DOMContentLoaded', function()
      initTabs();
 
      mUI.update_screen();
+
+     function updateChartSize() {
+       $('.iChart_m5').data("iguanaChart").viewData.chart.resize()
+       $('.iChart_h1').data("iguanaChart").viewData.chart.resize()
+       $('.iChart_d1').data("iguanaChart").viewData.chart.resize()
+     }
+     const onResize = debounce(updateChartSize, 200);
+     window.addEventListener('resize', onResize);
 
      document.querySelector('#order-dlg #form-risk')
        .innerHTML = "&nbsp;&nbsp;Risk = "+gm.risk;
