@@ -949,8 +949,8 @@ class MarketUI {
 
      this.order_dlg = $("#order-dlg").dialog({
        autoOpen: false,
-       width:600,
-       height:550,
+       width:670,
+       height:500,
        buttons: {
          "Execute": () => {
            var rc = self.call_exec_order();
@@ -967,7 +967,7 @@ class MarketUI {
 
      this.edit_order_dlg = $("#edit-order-dlg").dialog({
        autoOpen: false,
-       width:600,
+       width:670,
        height:320,
        buttons: {
          "OK": () => {
@@ -985,7 +985,7 @@ class MarketUI {
 
      this.edit_stop_dlg = $("#edit-stop-dlg").dialog({
        autoOpen: false,
-       width:600,
+       width:550,
        height:450,
        buttons: {
          "OK": () => {
@@ -1009,7 +1009,7 @@ class MarketUI {
          my: "left bottom", at:"left bottom", of: window
        },
        width:600,
-       height:280,
+       height:290,
      });
      this.stop_order_list_dlg = $("#stop-order-list-dlg").dialog({
        autoOpen: false,
@@ -1019,7 +1019,7 @@ class MarketUI {
          my: "left+5 bottom+5", at:"right bottom", of: this.order_list_dlg
        },
        width:900,
-       height:280,
+       height:290,
      });
      this.status_dlg = $("#status-dlg").dialog({
        autoOpen: false,
@@ -1029,7 +1029,7 @@ class MarketUI {
          my: "left+40 bottom+5", at:"right bottom", of: this.stop_order_list_dlg
        },
        width:350,
-       height:280,
+       height:290,
      });
      this.save_trans_dlg = $("#save-trans-dlg").dialog({
        autoOpen: false,
