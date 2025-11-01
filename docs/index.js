@@ -1009,9 +1009,9 @@ class MarketUI {
          my: "left bottom", at:"left bottom", of: window
        },
        width:600,
-       height:350,
+       height:280,
      });
-     this.stop_order_list_dlg = $("#stop-order-list-dlg").dialog({
+     this.stop_order_list_dlg = $("#-order-list").dialog({
        autoOpen: false,
        closeOnEscape: false,
        dialogClass:"noclose notitle",
@@ -1019,7 +1019,7 @@ class MarketUI {
          my: "left+5 bottom+5", at:"right bottom", of: this.order_list_dlg
        },
        width:900,
-       height:350,
+       height:280,
      });
      this.status_dlg = $("#status-dlg").dialog({
        autoOpen: false,
@@ -1029,7 +1029,7 @@ class MarketUI {
          my: "left+40 bottom+5", at:"right bottom", of: this.stop_order_list_dlg
        },
        width:350,
-       height:350,
+       height:280,
      });
      this.save_trans_dlg = $("#save-trans-dlg").dialog({
        autoOpen: false,
