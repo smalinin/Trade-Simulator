@@ -94,6 +94,8 @@
                 return new iChart.Charting.ChartFibonacciFan(this);
             case "HorizontalLine":
                 return new iChart.Charting.ChartHorizontalLine(this);
+            case "OrderLine":
+                return new iChart.Charting.ChartOrderLine(this);
             case "Line":
                 return new iChart.Charting.ChartLine(this);
             case "Rectangle":

@@ -216,8 +216,12 @@ $.templates("iChart_topToolBarTmpl", '' +
                 '<i class="sprite sprite-icon-trash"></i>' +
             '</div>' +
 
+            '<i class="sprite sprite-icon-divider"></i>' +
+            '<div class="js-chart-ui-indicators"></div>' +
+
         '</div>' +
 
+        '<i class="sprite sprite-icon-divider"></i>' +
         '<div class="uk-flex uk-flex-left">' +
 
         '<div class="tm-graph-button uk-flex uk-flex-center uk-flex-middle js-chart-ui-control" data-property="dataInterval" data-value="I1" data-uk-tooltip="{pos:\'top\'}" title="1 minute > day">' +
@@ -243,10 +247,6 @@ $.templates("iChart_topToolBarTmpl", '' +
         '<div class="tm-graph-button uk-flex uk-flex-center uk-flex-middle js-chart-ui-control" data-property="dataInterval" data-value="D7" data-uk-tooltip="{pos:\'top\'}" title="Week">' +
             '<i class="sprite sprite-icon-w"></i>' +
         '</div>' +
-
-        '<i class="sprite sprite-icon-divider"></i>' +
-
-        '<div class="js-chart-ui-indicators"></div>' +
     '</div>'
 );
 

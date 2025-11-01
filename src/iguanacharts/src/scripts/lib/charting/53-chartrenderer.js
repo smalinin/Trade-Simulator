@@ -7,6 +7,317 @@
 {
     "use strict";
 
+    /**
+     * WebGL рендерер для высокопроизводительной отрисовки свечных графиков
+     * Используется автоматически при большом количестве свечей (>1000)
+     */
+    iChart.Charting.WebGLCandleRenderer = function ()
+    {
+        this.gl = null;
+        this.program = null;
+        this.buffers = {};
+        this.initialized = false;
+    };
+
+    iChart.Charting.WebGLCandleRenderer.prototype.isSupported = function ()
+    {
+        /// <summary>
+        /// Проверяет поддержку WebGL в браузере
+        /// </summary>
+        try {
+            var canvas = document.createElement('canvas');
+            return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+        } catch(e) {
+            return false;
+        }
+    };
+
+    iChart.Charting.WebGLCandleRenderer.prototype.initialize = function (canvas)
+    {
+        /// <summary>
+        /// Инициализирует WebGL контекст и шейдеры
+        /// </summary>
+        if (this.initialized) {
+            return true;
+        }
+
+        try {
+            this.gl = canvas.getContext('webgl', {
+                alpha: true,
+                antialias: false,
+                depth: false,
+                premultipliedAlpha: true,
+                preserveDrawingBuffer: false,
+                powerPreference: 'high-performance'
+            }) || canvas.getContext('experimental-webgl', {
+                alpha: true,
+                antialias: false,
+                depth: false,
+                premultipliedAlpha: true
+            });
+
+            if (!this.gl) {
+                return false;
+            }
+
+            // Вершинный шейдер для отрисовки свечей
+            var vertexShaderSource = `
+                attribute vec2 a_position;
+                attribute vec4 a_color;
+                uniform vec2 u_resolution;
+                varying vec4 v_color;
+                
+                void main() {
+                    vec2 clipSpace = ((a_position / u_resolution) * 2.0) - 1.0;
+                    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+                    v_color = a_color;
+                }
+            `;
+
+            // Фрагментный шейдер
+            var fragmentShaderSource = `
+                precision mediump float;
+                varying vec4 v_color;
+                
+                void main() {
+                    gl_FragColor = v_color;
+                }
+            `;
+
+            var vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
+            var fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+            if (!vertexShader || !fragmentShader) {
+                return false;
+            }
+
+            this.program = this.createProgram(vertexShader, fragmentShader);
+            if (!this.program) {
+                return false;
+            }
+
+            // Получаем расположение атрибутов и uniform-переменных
+            this.locations = {
+                position: this.gl.getAttribLocation(this.program, 'a_position'),
+                color: this.gl.getAttribLocation(this.program, 'a_color'),
+                resolution: this.gl.getUniformLocation(this.program, 'u_resolution')
+            };
+
+            // Создаем буферы
+            this.buffers.position = this.gl.createBuffer();
+            this.buffers.color = this.gl.createBuffer();
+
+            this.initialized = true;
+            return true;
+        } catch(e) {
+            console.warn('WebGL initialization failed:', e);
+            return false;
+        }
+    };
+
+    iChart.Charting.WebGLCandleRenderer.prototype.createShader = function (type, source)
+    {
+        var shader = this.gl.createShader(type);
+        this.gl.shaderSource(shader, source);
+        this.gl.compileShader(shader);
+
+        if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+            console.error('Shader compile error:', this.gl.getShaderInfoLog(shader));
+            this.gl.deleteShader(shader);
+            return null;
+        }
+
+        return shader;
+    };
+
+    iChart.Charting.WebGLCandleRenderer.prototype.createProgram = function (vertexShader, fragmentShader)
+    {
+        var program = this.gl.createProgram();
+        this.gl.attachShader(program, vertexShader);
+        this.gl.attachShader(program, fragmentShader);
+        this.gl.linkProgram(program);
+
+        if (!this.gl.getProgramParameter(program, this.gl.LINK_STATUS)) {
+            console.error('Program link error:', this.gl.getProgramInfoLog(program));
+            this.gl.deleteProgram(program);
+            return null;
+        }
+
+        return program;
+    };
+
+    iChart.Charting.WebGLCandleRenderer.prototype.render = function (area, series, chartOptions)
+    {
+        /// <summary>
+        /// Отрисовывает свечи с использованием WebGL
+        /// </summary>
+        if (!this.initialized || !this.gl) {
+            return false;
+        }
+
+        var gl = this.gl;
+        var viewport = area.viewport.x.bounded;
+        
+        // Собираем данные для всех свечей
+        var positions = [];
+        var colors = [];
+        
+        // Кэшируем параметры
+        var pointWidth = area.axisX.pointWidth;
+        var candleUp = this.parseColor(chartOptions.candleUp);
+        var candleDown = this.parseColor(chartOptions.candleDown);
+        var wickStyle = this.parseColor(chartOptions.candleWickStyle);
+        var useWick = chartOptions.candleWick;
+
+        for (var i = viewport.min; i <= viewport.max; ++i)
+        {
+            var values = series.points[i];
+            if (!values || (!values[0] && !values[1] && !values[2] && !values[3])) {
+                continue;
+            }
+
+            var x = (area.getXPositionByIndex(i) + 0.5) | 0;
+            var high = (area.getYPosition(values[0], series.inline) + 0.5) | 0;
+            var low = (area.getYPosition(values[1], series.inline) + 0.5) | 0;
+            var open = (area.getYPosition(values[2], series.inline) + 0.5) | 0;
+            var close = (area.getYPosition(values[3], series.inline) + 0.5) | 0;
+
+            var isUp = values[2] < values[3];
+            var candleTop = isUp ? close : open;
+            var candleBottom = isUp ? open : close;
+            var color = isUp ? candleUp : candleDown;
+
+            // Рисуем тело свечи (прямоугольник = 2 треугольника = 6 вершин)
+            var x1 = x - pointWidth;
+            var x2 = x + pointWidth;
+            var y1 = candleTop;
+            var y2 = candleBottom;
+
+            // Треугольник 1
+            positions.push(x1, y1, x2, y1, x1, y2);
+            // Треугольник 2
+            positions.push(x1, y2, x2, y1, x2, y2);
+
+            // Цвета для всех 6 вершин
+            for (var j = 0; j < 6; j++) {
+                colors.push(color.r, color.g, color.b, color.a);
+            }
+
+            // Рисуем фитили (линии как тонкие прямоугольники)
+            if (useWick) {
+                var wickWidth = 0.5;
+                
+                // Верхний фитиль
+                if (high < candleTop) {
+                    positions.push(
+                        x - wickWidth, high, x + wickWidth, high, x - wickWidth, candleTop,
+                        x - wickWidth, candleTop, x + wickWidth, high, x + wickWidth, candleTop
+                    );
+                    for (var j = 0; j < 6; j++) {
+                        colors.push(wickStyle.r, wickStyle.g, wickStyle.b, wickStyle.a);
+                    }
+                }
+
+                // Нижний фитиль
+                if (low > candleBottom) {
+                    positions.push(
+                        x - wickWidth, candleBottom, x + wickWidth, candleBottom, x - wickWidth, low,
+                        x - wickWidth, low, x + wickWidth, candleBottom, x + wickWidth, low
+                    );
+                    for (var j = 0; j < 6; j++) {
+                        colors.push(wickStyle.r, wickStyle.g, wickStyle.b, wickStyle.a);
+                    }
+                }
+            }
+        }
+
+        if (positions.length === 0) {
+            return true;
+        }
+
+        // Настраиваем WebGL
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(this.program);
+
+        // Устанавливаем разрешение
+        gl.uniform2f(this.locations.resolution, gl.canvas.width, gl.canvas.height);
+
+        // Загружаем данные позиций
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(this.locations.position);
+        gl.vertexAttribPointer(this.locations.position, 2, gl.FLOAT, false, 0, 0);
+
+        // Загружаем данные цветов
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.color);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(this.locations.color);
+        gl.vertexAttribPointer(this.locations.color, 4, gl.FLOAT, false, 0, 0);
+
+        // Включаем блендинг для прозрачности
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        // Рисуем
+        gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2);
+
+        return true;
+    };
+
+    iChart.Charting.WebGLCandleRenderer.prototype.parseColor = function (colorString)
+    {
+        /// <summary>
+        /// Преобразует CSS цвет в RGBA компоненты (0-1)
+        /// </summary>
+        var r = 0, g = 0, b = 0, a = 1;
+
+        if (!colorString) {
+            return {r: r, g: g, b: b, a: a};
+        }
+
+        // Парсим hex цвет
+        if (colorString.charAt(0) === '#') {
+            var hex = colorString.substring(1);
+            if (hex.length === 3) {
+                r = parseInt(hex.charAt(0) + hex.charAt(0), 16) / 255;
+                g = parseInt(hex.charAt(1) + hex.charAt(1), 16) / 255;
+                b = parseInt(hex.charAt(2) + hex.charAt(2), 16) / 255;
+            } else if (hex.length === 6) {
+                r = parseInt(hex.substring(0, 2), 16) / 255;
+                g = parseInt(hex.substring(2, 4), 16) / 255;
+                b = parseInt(hex.substring(4, 6), 16) / 255;
+            }
+        }
+        // Парсим rgb/rgba
+        else if (colorString.indexOf('rgb') === 0) {
+            var match = colorString.match(/[\d.]+/g);
+            if (match) {
+                r = parseFloat(match[0]) / 255;
+                g = parseFloat(match[1]) / 255;
+                b = parseFloat(match[2]) / 255;
+                a = match[3] !== undefined ? parseFloat(match[3]) : 1;
+            }
+        }
+
+        return {r: r, g: g, b: b, a: a};
+    };
+
+    iChart.Charting.WebGLCandleRenderer.prototype.dispose = function ()
+    {
+        /// <summary>
+        /// Освобождает ресурсы WebGL
+        /// </summary>
+        if (this.gl && this.initialized) {
+            if (this.buffers.position) this.gl.deleteBuffer(this.buffers.position);
+            if (this.buffers.color) this.gl.deleteBuffer(this.buffers.color);
+            if (this.program) this.gl.deleteProgram(this.program);
+        }
+        this.initialized = false;
+    };
+
+
     iChart.Charting.ChartRenderer = function (chart)
     {
         /// <summary>
@@ -15,6 +326,22 @@
         /// <param name="chart">Chart object to render.</param>
 
         this.chart = chart;
+        this.webglRenderer = new iChart.Charting.WebGLCandleRenderer();
+        this.useWebGL = false;
+        this.webglCanvas = null;
+    };
+
+    iChart.Charting.ChartRenderer.prototype.dispose = function ()
+    {
+        /// <summary>
+        /// Освобождает ресурсы рендерера, включая WebGL
+        /// </summary>
+        if (this.webglRenderer) {
+            this.webglRenderer.dispose();
+        }
+        if (this.webglCanvas) {
+            this.webglCanvas = null;
+        }
     };
 
     iChart.Charting.ChartRenderer.prototype.formatDateTime = function (value)
@@ -387,6 +714,7 @@
         }
     };
 
+
     iChart.Charting.ChartRenderer.prototype.renderPoint = function (area, series, index, context, state)
     {
         /// <summary>
@@ -412,9 +740,10 @@
                     return;
                 }
 
-                var x = Math.round(area.getXPositionByIndex(index));
-                var high = Math.round(area.getYPosition(values[0], series.inline));
-                var low = Math.round(area.getYPosition(values[1], series.inline));
+                // Оптимизация: использование битовых операций вместо Math.round()
+                var x = (area.getXPositionByIndex(index) + 0.5) | 0;
+                var high = (area.getYPosition(values[0], series.inline) + 0.5) | 0;
+                var low = (area.getYPosition(values[1], series.inline) + 0.5) | 0;
                 if (area.axisX.pointWidth === 0)
                 {
                     context.moveTo(x, low);
@@ -422,58 +751,53 @@
                     break;
                 }
 
-                var open = Math.round(area.getYPosition(values[2], series.inline));
-                var close = Math.round(area.getYPosition(values[3], series.inline));
+                var open = (area.getYPosition(values[2], series.inline) + 0.5) | 0;
+                var close = (area.getYPosition(values[3], series.inline) + 0.5) | 0;
 
                 if (series.chartType === "Candlestick")
                 {
-                    context.save();
-                    var candleBottom;
-                    var candleTop;
-                    if (values[2] < values[3])
+                    // Оптимизация: кэшируем часто используемые значения
+                    if (!state.candleCache) {
+                        state.candleCache = {
+                            pointWidth: area.axisX.pointWidth,
+                            pointWidth2: 2 * area.axisX.pointWidth,
+                            candleUp: area.chart.chartOptions.candleUp,
+                            candleDown: area.chart.chartOptions.candleDown,
+                            candleBorder: area.chart.chartOptions.candleBorder,
+                            candleBorderUp: area.chart.chartOptions.candleBorderUp,
+                            candleBorderDown: area.chart.chartOptions.candleBorderDown,
+                            candleWick: area.chart.chartOptions.candleWick,
+                            wickStyle: area.chart.chartOptions.candleWickStyle
+                        };
+                    }
+                    var cache = state.candleCache;
+                    
+                    var candleBottom, candleTop, isUp = values[2] < values[3];
+                    
+                    if (isUp)
                     {
                         candleBottom = open;
                         candleTop = close;
-
-                        if (area.chart.chartOptions.candleUp)
-                        {
-                            context.fillStyle = area.chart.chartOptions.candleUp;
-                        }
-
-                        if(!area.chart.chartOptions.candleBorder) {
-                            context.strokeStyle = context.fillStyle;
-                        } else {
-                            context.strokeStyle = area.chart.chartOptions.candleBorderUp;
-                        }
-
-                        context.fillRect(x - area.axisX.pointWidth, candleTop, 2 * area.axisX.pointWidth, candleBottom - candleTop);
+                        context.fillStyle = cache.candleUp;
+                        context.strokeStyle = cache.candleBorder ? cache.candleBorderUp : cache.candleUp;
                     }
                     else
                     {
                         candleBottom = close;
                         candleTop = open;
-
-                        if (area.chart.chartOptions.candleDown)
-                        {
-                            context.fillStyle = area.chart.chartOptions.candleDown;
-                            //context.fillRect(x - area.axisX.pointWidth, candleTop, 2 * area.axisX.pointWidth, candleBottom - candleTop);
-                        }
-
-                        context.fillRect(x - area.axisX.pointWidth, candleTop, 2 * area.axisX.pointWidth, candleBottom - candleTop);
-
-                        if(!area.chart.chartOptions.candleBorder) {
-                            context.strokeStyle = context.fillStyle;
-                        } else {
-                            context.strokeStyle = area.chart.chartOptions.candleBorderDown;
-                        }
+                        context.fillStyle = cache.candleDown;
+                        context.strokeStyle = cache.candleBorder ? cache.candleBorderDown : cache.candleDown;
                     }
 
-                    context.strokeRect(x - area.axisX.pointWidth, candleTop, 2 * area.axisX.pointWidth, candleBottom - candleTop);
+                    // Рисуем тело свечи
+                    var rectX = x - cache.pointWidth;
+                    var rectHeight = candleBottom - candleTop;
+                    context.fillRect(rectX, candleTop, cache.pointWidth2, rectHeight);
+                    context.strokeRect(rectX, candleTop, cache.pointWidth2, rectHeight);
 
-                    context.restore();
-
-                    if(area.chart.chartOptions.candleWick) {
-                        context.strokeStyle = area.chart.chartOptions.candleWickStyle;
+                    // Рисуем фитили
+                    if(cache.candleWick) {
+                        context.strokeStyle = cache.wickStyle;
                         context.moveTo(x, high);
                         context.lineTo(x, candleTop);
 
@@ -610,6 +934,161 @@
         }
     };
 
+    iChart.Charting.ChartRenderer.prototype.renderCandlesBatched = function (area, series, context)
+    {
+        /// <summary>
+        /// Оптимизированная батчинг-отрисовка свечей для повышения производительности.
+        /// Группирует операции по типу: все фитили → все зеленые свечи → все красные свечи.
+        /// Автоматически переключается на WebGL при большом количестве свечей (>1000).
+        /// </summary>
+        
+        // Определяем количество свечей для отрисовки
+        var candleCount = area.viewport.x.bounded.max - area.viewport.x.bounded.min + 1;
+        
+        // Автоматическое переключение на WebGL для большого количества свечей
+        var webglThreshold = this.chart.chartOptions.webglThreshold || 1000;
+        var useWebGL = candleCount > webglThreshold && this.chart.chartOptions.enableWebGL !== false;
+        
+        if (useWebGL && this.webglRenderer.isSupported()) {
+            // Создаем WebGL canvas если еще не создан
+            if (!this.webglCanvas) {
+                this.webglCanvas = document.createElement('canvas');
+                this.webglCanvas.width = this.chart.canvas.width;
+                this.webglCanvas.height = this.chart.canvas.height;
+                this.webglRenderer.initialize(this.webglCanvas);
+            }
+            
+            // Синхронизируем размеры
+            if (this.webglCanvas.width !== this.chart.canvas.width || 
+                this.webglCanvas.height !== this.chart.canvas.height) {
+                this.webglCanvas.width = this.chart.canvas.width;
+                this.webglCanvas.height = this.chart.canvas.height;
+            }
+            
+            // Рендерим через WebGL
+            if (this.webglRenderer.render(area, series, this.chart.chartOptions)) {
+                // Копируем результат WebGL на основной canvas
+                context.save();
+                context.translate(area.innerOffset.left, area.innerOffset.top);
+                context.drawImage(this.webglCanvas, 
+                    0, 0, area.innerWidth, area.innerHeight,
+                    0, 0, area.innerWidth, area.innerHeight);
+                context.restore();
+                return;
+            }
+            
+            // Если WebGL не сработал, fallback на Canvas 2D
+            console.warn('WebGL rendering failed, falling back to Canvas 2D');
+        }
+        
+        // Кэшируем часто используемые значения один раз
+        var pointWidth = area.axisX.pointWidth;
+        var pointWidth2 = 2 * pointWidth;
+        var candleUp = area.chart.chartOptions.candleUp;
+        var candleDown = area.chart.chartOptions.candleDown;
+        var useBorder = area.chart.chartOptions.candleBorder;
+        var borderUp = area.chart.chartOptions.candleBorderUp;
+        var borderDown = area.chart.chartOptions.candleBorderDown;
+        var useWick = area.chart.chartOptions.candleWick;
+        var wickStyle = area.chart.chartOptions.candleWickStyle;
+        
+        var upCandles = [];
+        var downCandles = [];
+        
+        // Первый проход: собираем данные и разделяем на зеленые/красные свечи
+        for (var i = area.viewport.x.bounded.min; i <= area.viewport.x.bounded.max; ++i)
+        {
+            var values = series.points[i];
+            if (!values || (!values[0] && !values[1] && !values[2] && !values[3]))
+            {
+                continue;
+            }
+            
+            // Используем битовые операции для округления (быстрее Math.round)
+            var x = (area.getXPositionByIndex(i) + 0.5) | 0;
+            var high = (area.getYPosition(values[0], series.inline) + 0.5) | 0;
+            var low = (area.getYPosition(values[1], series.inline) + 0.5) | 0;
+            var open = (area.getYPosition(values[2], series.inline) + 0.5) | 0;
+            var close = (area.getYPosition(values[3], series.inline) + 0.5) | 0;
+            
+            var candleData = {
+                x: x,
+                high: high,
+                low: low,
+                top: values[2] < values[3] ? close : open,
+                bottom: values[2] < values[3] ? open : close
+            };
+            
+            if (values[2] < values[3]) {
+                upCandles.push(candleData);
+            } else {
+                downCandles.push(candleData);
+            }
+        }
+        
+        // Проход 2: Рисуем все фитили одним путем (если включены)
+        if (useWick && (upCandles.length > 0 || downCandles.length > 0))
+        {
+            context.beginPath();
+            context.strokeStyle = wickStyle;
+            
+            // Фитили зеленых свечей
+            for (var j = 0; j < upCandles.length; ++j)
+            {
+                var candle = upCandles[j];
+                context.moveTo(candle.x, candle.high);
+                context.lineTo(candle.x, candle.top);
+                context.moveTo(candle.x, candle.bottom);
+                context.lineTo(candle.x, candle.low);
+            }
+            
+            // Фитили красных свечей
+            for (var j = 0; j < downCandles.length; ++j)
+            {
+                var candle = downCandles[j];
+                context.moveTo(candle.x, candle.high);
+                context.lineTo(candle.x, candle.top);
+                context.moveTo(candle.x, candle.bottom);
+                context.lineTo(candle.x, candle.low);
+            }
+            
+            context.stroke();
+        }
+        
+        // Проход 3: Рисуем все зеленые свечи
+        if (upCandles.length > 0)
+        {
+            context.fillStyle = candleUp;
+            context.strokeStyle = useBorder ? borderUp : candleUp;
+            
+            for (var j = 0; j < upCandles.length; ++j)
+            {
+                var candle = upCandles[j];
+                var rectX = candle.x - pointWidth;
+                var rectHeight = candle.bottom - candle.top;
+                context.fillRect(rectX, candle.top, pointWidth2, rectHeight);
+                context.strokeRect(rectX, candle.top, pointWidth2, rectHeight);
+            }
+        }
+        
+        // Проход 4: Рисуем все красные свечи
+        if (downCandles.length > 0)
+        {
+            context.fillStyle = candleDown;
+            context.strokeStyle = useBorder ? borderDown : candleDown;
+            
+            for (var j = 0; j < downCandles.length; ++j)
+            {
+                var candle = downCandles[j];
+                var rectX = candle.x - pointWidth;
+                var rectHeight = candle.bottom - candle.top;
+                context.fillRect(rectX, candle.top, pointWidth2, rectHeight);
+                context.strokeRect(rectX, candle.top, pointWidth2, rectHeight);
+            }
+        }
+    };
+
+
     iChart.Charting.ChartRenderer.prototype.renderSeries = function (area, series, context, index)
     {
         /// <summary>
@@ -678,20 +1157,26 @@
 
 
         var useSinglePath = series.chartType === "Area" || series.chartType === "Candlestick" || (series.chartType === "Column" && area.axisX.pointWidth === 0) || series.chartType === "Line" || series.chartType === "Stock"
-        if (useSinglePath)
-        {
-            context.beginPath();
-        }
+        
+        // Оптимизация: для свечей используем батчинг (пакетную обработку)
+        if (series.chartType === "Candlestick" && area.axisX.pointWidth !== 0) {
+            this.renderCandlesBatched(area, series, context);
+        } else {
+            if (useSinglePath)
+            {
+                context.beginPath();
+            }
 
-        var state = {};
-        for (var i = area.viewport.x.bounded.min; i <= area.viewport.x.bounded.max; ++i)
-        {
-            this.renderPoint(area, series, i, context, state);
-        }
+            var state = {};
+            for (var i = area.viewport.x.bounded.min; i <= area.viewport.x.bounded.max; ++i)
+            {
+                this.renderPoint(area, series, i, context, state);
+            }
 
-        if (useSinglePath)
-        {
-            context.stroke();
+            if (useSinglePath)
+            {
+                context.stroke();
+            }
         }
 
         if (series.chartType === "Area")
@@ -716,21 +1201,40 @@
         context.save();
 
         context.translate(0.5, 0.5);
+        
+        // Оптимизация: используем более эффективный метод клипирования
         context.beginPath();
-        context.moveTo(1, 1);
-        context.lineTo(1, area.axisY.length - 1);
-        context.lineTo(area.axisX.length - 1, area.axisY.length - 1);
-        context.lineTo(area.axisX.length - 1, 1);
-        context.closePath();
+        context.rect(1, 1, area.axisX.length - 2, area.axisY.length - 2);
         context.clip();
 
+        // Оптимизация: группируем серии по типу для минимизации переключений состояния
+        var candleSeries = [];
+        var otherSeries = [];
+        
         for (var j = 0; j < area.ySeries.length; ++j)
         {
-            this.renderSeries(area, area.ySeries[j], context, j);
+            if (area.ySeries[j].chartType === 'Candlestick' && area.axisX.pointWidth !== 0) {
+                candleSeries.push({series: area.ySeries[j], index: j});
+            } else {
+                otherSeries.push({series: area.ySeries[j], index: j});
+            }
+        }
+        
+        // Сначала рендерим все свечи (меньше переключений состояния)
+        for (var j = 0; j < candleSeries.length; ++j)
+        {
+            this.renderSeries(area, candleSeries[j].series, context, candleSeries[j].index);
+        }
+        
+        // Затем остальные серии
+        for (var j = 0; j < otherSeries.length; ++j)
+        {
+            this.renderSeries(area, otherSeries[j].series, context, otherSeries[j].index);
         }
 
         context.restore();
     };
+
 
     iChart.Charting.ChartRenderer.prototype.renderXLabels = function (area, context)
     {

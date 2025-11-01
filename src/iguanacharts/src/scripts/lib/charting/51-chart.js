@@ -482,6 +482,31 @@
             console.log('No ares to render. Abort');
             return false;
         }
+        
+        // Оптимизация: используем requestAnimationFrame для плавной отрисовки
+        // Пропускаем для принудительного рендера или если уже запланирован
+        if (!params.forceRecalc && !params.context && typeof requestAnimationFrame !== 'undefined') {
+            if (this._renderScheduled) {
+                return false;
+            }
+            
+            this._renderScheduled = true;
+            var self = this;
+            requestAnimationFrame(function() {
+                self._renderScheduled = false;
+                self._doRender(params, bySchedule);
+            });
+            return true;
+        }
+        
+        return this._doRender(params, bySchedule);
+    };
+    
+    iChart.Charting.Chart.prototype._doRender = function (params, bySchedule)
+    {
+        /// <summary>
+        /// Internal render method that performs actual rendering.
+        /// </summary>
 
         if (params.context && params.forceRecalc)
         {

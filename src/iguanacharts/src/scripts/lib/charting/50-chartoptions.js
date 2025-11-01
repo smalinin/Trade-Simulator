@@ -52,6 +52,7 @@
         this.tooltipPosition     =  'bottom';
         this.showAxes = 0;
         this.shadowColor =  '#999999';
+/***
         this.indicatorColors =  [
                 ["#3D96AE", "#80699B", "#DB843D", "#B5CA92"],
                 ["#A47D7C", "#B5CA92", "#e0400a", "#617db4"],
@@ -66,6 +67,25 @@
                 ["#A47D7C", "#B5CA92", "#e0400a", "#617db4"],
                 ["#ff8c00", "#617db4", "#999999", "#80699B"]
             ];
+***/
+        this.indicatorColors =  [
+                ["#FF0000", "#80699B", "#DB843D", "#B5CA92"],
+                ["#0000FF", "#B5CA92", "#e0400a", "#617db4"],
+
+                ["#ff0000", "#617db4", "#999999", "#80699B"],
+                ["#0000ff", "#80699B", "#DB843D", "#B5CA92"],
+
+                ["#ff0000", "#B5CA92", "#e0400a", "#617db4"],
+                ["#0000ff", "#617db4", "#999999", "#80699B"],
+
+                ["#3D96AE", "#80699B", "#DB843D", "#B5CA92"],
+                ["#A47D7C", "#B5CA92", "#e0400a", "#617db4"],
+                ["#ff8c00", "#617db4", "#999999", "#80699B"],
+                ["#3D96AE", "#80699B", "#DB843D", "#B5CA92"],
+                ["#A47D7C", "#B5CA92", "#e0400a", "#617db4"],
+                ["#ff8c00", "#617db4", "#999999", "#80699B"]
+            ];
+
         this.minAreaHeight =  100;
         this.minHeight =  0;
         this.seriesColors =  ["#4BA1B8", "#FF8C00", "#A47D7C", "#3D96AE", "#80699B", "#DB843D", "#80699B"];
@@ -83,6 +103,17 @@
         this.percentMode =  false;
         this.futureAmount =  100;
         this.crosshairEnable =  true;
+        /**
+         * Включить WebGL рендеринг для высокой производительности
+         * Автоматически активируется при >1000 свечей
+         * @type {boolean}
+         */
+        this.enableWebGL = true;
+        /**
+         * Порог количества свечей для переключения на WebGL
+         * @type {number}
+         */
+        this.webglThreshold = 1000;
         /**
          *
          * @type {'Candlestick'|'Stock'|'Line','Area'}

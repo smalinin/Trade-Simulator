@@ -963,6 +963,31 @@ TA.INDICATOR_TEMPLATE.prototype.SetSettings = function (settings) {
         }
     };
 
+    iChart.Charting.TA.prototype.EMA_H1 = function (enable, index, params) {
+        if(enable) {
+            var INDICATOR = 'EMA_H1';
+            params = params || this.getDefaultParams(INDICATOR);
+
+            var Series = this.createSeries(INDICATOR, index);
+            Series[0].params = params;
+            Series[0].labels = this.getLabels(Series[0], params);
+
+            var chartSeries = this.getData();
+            var taData = TA[INDICATOR].justifyCalculate(0, chartSeries.length - 1, chartSeries, params);
+            for (var j = 0; j < taData.length; j++) {
+
+                Series[0].points.push([taData[j] === 0 ? null : taData[j]]);
+            }
+
+            this.chart.areas[0].ySeries.push(Series[0]);
+
+            $(this.chart.env.container).trigger('iguanaChartEvents', ['indicatorDataReady', {name: INDICATOR, params: params, data:taData}]);
+            this.chart.render({"forceRecalc": true, "resetViewport": false, "testForIntervalChange": false});
+        } else {
+            this.removeIndicator(index);
+        }
+    };
+
     iChart.Charting.TA.prototype.ENV = function (enable, index, params) {
         if(enable) {
             var INDICATOR = 'ENV';

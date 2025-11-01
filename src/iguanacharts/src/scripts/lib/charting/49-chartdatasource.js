@@ -54,7 +54,7 @@
         }
          */
         function onRequestCallback (callback, params) {
-            console.log(params);
+            //console.log(params);
             var data = this.dataAdapter(this.data, params);
             this.chart.wrapper.trigger('iguanaChartEvents', ['chartDataReceived', data]);
             callback(data);

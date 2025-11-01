@@ -129,8 +129,8 @@
 
             this.viewData.chart = new iChart.Charting.Chart(chartOptions);
             this.TA = new iChart.Charting.TA({chart: this.viewData.chart});
-            this.viewData.chart.setDataSettings(this.dataSource.dataSettings);
             this.ui = new iChart.ui(this);
+            this.viewData.chart.setDataSettings(this.dataSource.dataSettings);
             this.dataRequestCounter = 0;
         } else {
             this.viewData.chart.chartOptions = $.extend(true, this.viewData.chart.chartOptions, settings);
@@ -699,6 +699,7 @@
         options = options || {};
         //$("#iChart-tech-analysis-dialog").show();
         this.timers.updateInterval = this.viewData.chart.chartOptions.updateInterval;
+/***
         this.setScheduleUpdateState(0);
 
         var indicators = this.deserializeIndicators(this.dataSource.dataSettings.graphicIndicators);
@@ -742,6 +743,7 @@
             if(_this.timers.updateInterval) {_this.setScheduleUpdateState(1, _this.timers.updateInterval)}
             return false;
         });
+***/
     };
 
     this.window_onHashChange = function () {
@@ -936,6 +938,60 @@
         return p;
     };
 
+
+    this.redrawView = function() {
+        this.viewData.chart.overlay.render();
+        this.viewData.chart.indicatorsApply();
+    };
+
+
+    this.updateLastPoint = function (data) {
+        if(!data) { return;}
+        var element = data;
+        if(typeof this.viewData.chart != "undefined" && !!this.viewData.chart.areas && this.viewData.chart.canvas && !!this.viewData.chart.chartOptions.updateInterval) {
+            var chartDate = new Date(this.viewData.chart.areas[0].xSeries[this.viewData.chart.areas[0].xSeries.length-this.viewData.chart.chartOptions.futureAmount-1]*1000);
+            var currentDate = new Date(data.ltt);
+            if(currentDate.getTime() >= chartDate.getTime() && currentDate.getTime() < (chartDate.getTime() + this.viewData.chart._dataSettings.timeframe * 60000)) {
+                var point = this.viewData.chart.areas[0].ySeries[0].points[this.viewData.chart.areas[0].ySeries[0].points.length-this.viewData.chart.chartOptions.futureAmount-1];
+                point[0] = data.high;
+                point[1] = data.low;
+                point[2] = data.open;
+                point[3] = data.close;
+
+                var vpoint = this.viewData.chart.areas[2].ySeries[0].points[this.viewData.chart.areas[2].ySeries[0].points.length-this.viewData.chart.chartOptions.futureAmount-1];
+                vpoint[0] = data.vol;
+
+                this.viewData.chart.overlay.render();
+                this.viewData.chart.indicatorsApply();
+
+            } else if(currentDate.getTime() > (chartDate.getTime() + this.viewData.chart._dataSettings.timeframe * 60000)) {
+
+                var point = this.getLastPoint();
+                var newPoint = {
+                    "hloc": {},
+                    "vl": {},
+                    "xSeries" : {}
+                };
+
+                var hloc = [];
+                hloc[0] = element.ltp;
+                hloc[1] = element.ltp;
+                hloc[2] = element.ltp;
+                hloc[3] = element.ltp;
+                var tm = ((currentDate.getTime() - currentDate.getTime() % (this.viewData.chart._dataSettings.timeframe * 60000)) / 1000) - getTimeOffsetServer(tzOffsetMoscow);
+
+                var id = Object.keys(point.xSeries)[0];
+
+                newPoint["hloc"][id] = [hloc];
+                newPoint["vl"][id] = [element.vol];
+                newPoint["xSeries"][id] = [tm];
+
+                this.addPoint(newPoint);
+            }
+        }
+    };
+
+/**
     this.updateLastCandle = function (data) {
         if(!data) { return;}
         var element = data;
@@ -975,6 +1031,39 @@
 
                 this.addPoint(newPoint);
             }
+        }
+    };
+***/
+
+    this.getDataATR = function (count) {
+        if(typeof this.viewData.chart != "undefined" && !!this.viewData.chart.areas && this.viewData.chart.canvas) {
+            var _this = this;
+            var hloc = this.viewData.chart.areas[0].ySeries[0].points;
+            var hlocLength = hloc.length-this.viewData.chart.chartOptions.futureAmount-1;
+            var start = hlocLength - count - 1;
+            if ((start - 1) < 0 )
+              start = 0;
+            if ((start + count + 1) > hlocLength)
+              count = hlocLength - 1;
+            const H=0;
+            const L=1;
+            const C=3;
+
+            var tr = 0;
+            var alpha = 2/(count+1);
+            for(var i=0; i < count; i++) {
+              var idx = start+i;
+              var t = Math.max(hloc[idx][H] - hloc[idx][L],
+                             hloc[idx][H] - hloc[idx-1][C],
+                             hloc[idx-1][C] - hloc[idx][L]);
+              if (i==0) {
+                tr = t;
+              }
+              else {
+                tr = alpha * t + (1 - alpha) * tr;
+              }
+            }
+            return tr;
         }
     };
 
@@ -1137,6 +1226,48 @@
             }
         }
     };
+
+    this.addHLine = function (data) {
+        if(typeof this.viewData.chart != "undefined") {
+
+            var element = this.viewData.chart.overlay.createElement("OrderLine");
+            element.hasSettings = true;
+            element.points = [{'x':new Date(), 'y':data.price}];
+            element.setSettings(data);
+            element.settings.lineWidth = 2;
+            element.controlEnable = false;
+
+            if (data.type_id == 1)
+              element.settings.strokeStyle = "#008000"; //green
+            else
+              element.settings.strokeStyle = "#ff0000"; //red
+
+            if (data.stop)
+              element.settings.lineDash = [10];
+            else
+              element.settings.lineDash = [2];
+            element.id = data.id;
+            this.viewData.chart.overlay.history.push(element);
+            this.viewData.chart.overlay.render();
+            return element;
+        }
+        return false;
+    };
+
+    this.removeHLine = function (data) {
+        if(typeof this.viewData.chart != "undefined") {
+            var overlayHistory = this.viewData.chart.overlay.history;
+            for(var i=0; i < overlayHistory.length; i++) {
+                var element = overlayHistory[i];
+                if(element.elementType == "OrderLine" && element.id === data.id) {
+                    overlayHistory.splice(i, 1);
+                    break;
+                }
+            }
+            this.viewData.chart.overlay.render();
+        }
+    };
+
 
     this.addLevel = function (data) {
         if(typeof this.viewData.chart != "undefined") {
@@ -1627,6 +1758,7 @@
             "resetViewport": false,
             "testForIntervalChange": false
         });
+        this.viewData.chart.indicatorsApply();
     };
 
     this.setStyleToCanvas = function (color, prop) {
@@ -1767,9 +1899,9 @@
     //$(document).on("click", "[name='SelectInstrument']", this.selectInstrument_onClick);
     $(document).on("click", "[name='updateChart']", this.updateChart_onClick);
     $(document).on("click", "[name='zoom']", this.zoom_onClick);
-    $(document).on("dblclick", function () {
-        _this.viewData.chart.render({ "forceRecalc": true, "resetViewport": true, "testForIntervalChange": false });
-    });
+//    $(document).on("dblclick", function () {
+//        _this.viewData.chart.render({ "forceRecalc": true, "resetViewport": true, "testForIntervalChange": false });
+//    });
     $(_this.wrapper).on('iguanaChartEvents', function(event, name, data) {
         if(name === 'chartDataReady') {
             if(_this.viewData.chart && _this.dataRequestCounter == 0) {

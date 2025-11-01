@@ -469,7 +469,7 @@
         if(this.name == 'ChartArea1') {
             // учет построенных инструментов анализа, что бы тоже попадали в область видимости
             var exclude = [
-                'HorizontalLine'
+                'HorizontalLine', 'OrderLine'
             ];
             var history = this.chart.overlay.history;
             for(var i=0;i<history.length;i++) {

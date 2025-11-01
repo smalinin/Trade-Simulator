@@ -184,6 +184,7 @@
 
                 indicators = _this.chart.serializeIndicators(indicators);
                 _this.chart.setIndicators(indicators);
+                _this.renderIndicatorsCurrent();
                 $.modal.impl.close();
             });
 
