@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Remove Tap Highlight on Windows Phone IE -->
+    <meta name="msapplication-tap-highlight" content="no"/>
+
+    <title>Trade Simulator</title>
+
+    <script type="text/javascript" src="lib/dependencies/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="lib/papaparse.min.js"></script>
+    <script type="text/javascript" src="lib/i18n/i18n.en.js"></script>
+
+
+    <script type="text/javascript" src="lib/dependencies/uikit/js/uikit.min.js"></script>
+    <script type="text/javascript" src="lib/dependencies/jquery.event.move.js"></script>
+    <script type="text/javascript" src="lib/dependencies/jquery.mousewheel.min.js"></script>
+    <script type="text/javascript" src="lib/dependencies/hammer.min.js"></script>
+    <script type="text/javascript" src="lib/dependencies/jquery.hammer.js"></script>
+    <script type="text/javascript" src="lib/dependencies/jsrender.min.js"></script>
+    <script type="text/javascript" src="lib/dependencies/jquery-minicolors/jquery.minicolors.min.js"></script>
+    <script type="text/javascript" src="lib/dependencies/jquery.qtip.min.js"></script>
+    <script type="text/javascript" src="lib/dependencies/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    <script type="text/javascript" src="lib/dependencies/FileSaver.js"></script>
+    <script type="text/javascript" src="lib/iguanachart.js"></script>
+    <script type="text/javascript" src="lib/dependencies/jquery-ui/jquery-ui.min.js"></script>
+
+
+    <link rel="stylesheet" href="lib/dependencies/uikit/css/uikit.min.css" media="all">
+    <link rel="stylesheet" href="lib/dependencies/jquery.qtip.min.css" media="all">
+    <link rel="stylesheet" href="lib/dependencies/jquery-minicolors/jquery.minicolors.css" media="all">
+    <link rel="stylesheet" href="lib/dependencies/jquery-ui/css/ui-lightness/jquery-ui.min.css" media="all">
+    <link rel="stylesheet" href="lib/dependencies/jquery-ui/css/ui-lightness/theme.css" media="all">
+
+    <link rel="stylesheet" href="lib/iguanachart.css" media="all">
+    <link rel="stylesheet" href="gridtable.css">
+    <link rel="stylesheet" href="index.css">
+
+    <script type="text/javascript" src="index.js"></script>
+
+</head>
+<body>
+  </p>
+  <div id="header">
+    <ul id="tabs">
+      <li><a href="#load" title="Load Data">Load</a></li>
+      <li><a href="#tf5min" title="5min data">5 MIN</a></li>
+      <li><a href="#tf1h" title="1h data ">1 H</a></li>
+      <li><a href="#tf1d" title="1d data ">1 D</a></li>
+      <li><a href="#trans" title="Transactions">Trans</a></li>
+      <li><a href="#equity" title="Equity">Equity</a></li>
+    </ul>
+  </div>
+
+  <div class="content">
+
+    <div id="load_items">
+      </p>
+      <div class="grid_load" >
+
+        <label class="m-label">Capital:</label>
+        <input class="uk-input" id="l-capital" type="number" value="1000000">
+        <div></div>
+
+        <label class="m-label">Risk in %:</label>
+        <input class="uk-input" id="l-risk" type="number" value="0.3">
+        <div></div>
+        
+        <label class="m-label">Stop default:</label>
+        <input class="uk-input" id="l-stop_def" type="number" value="100">
+        <div></div>
+
+        <label class="m-label">Stop mode:</label>
+        <input class="uk-input" id="l-stop_mode" type="text" value="price" disabled>
+        <div></div>
+
+        <label class="m-label">Data timeFrame in min:</label>
+        <input class="uk-input" id="l-candles_tf" type="number" value="5" disabled >
+        <div></div>
+<!--
+        <input class="uk-input" id="l-candles_tf" type="number" value="5" disabled >
+        <input class="uk-input" id="l-candles_tf" type="number" value="1" disabled >
+-->
+
+        <label class="m-label">Screen Size:</label>
+        <select style="width:100px;" id="l-screen">
+          <option value="FHD" >1980 x 1080</option>
+          <option value="2K" selected >2560 x 1440</option>
+        </select>
+        <div></div>
+
+        <label class="m-label">Mode:</label>
+        <select style="width:250px;" id="l-mode">
+          <option value="stock" selected >Stock Exchange (int Count)</option>
+          <option value="crypto">Crypto Exchange (float Count)</option>
+        </select>
+        <div></div>
+
+        <hr><hr><hr>
+
+        <label class="m-label">Start date (YYYYMMDD):</label>
+
+        <input class="uk-input" id="l-date0" type="number" value="20161213">
+        <div></div>
+
+        <label class="m-label">Play timeout (in ms):</label>
+        <input class="uk-input" id="l-timeout" type="number" value="200">
+        <div> time (in ms) for one candle in play mode </div>
+
+        <hr><hr><hr>
+
+        <label class="m-label">Ticker:</label>
+        <input class="uk-input" id="l-ticker" type="text" value="Si">
+        <div></div>
+
+        <label class="m-label" >Ticker Data:</label>
+        <input type="file" id="csv_5min" title="Load 5min data"></input>
+        <div>CSV file with 5min OHLCV</div>
+
+        <hr><hr><hr>
+
+        <label class="m-label">Indicator Ticker:</label>
+        <input class="uk-input" id="l-iticker" type="text" value="USDTOM">
+        <div>Only for View, not for Trade</div>
+
+        <label class="m-label" >Indicator Data:</label>
+        <input type="file" id="icsv_5min" title="Load 5min data"></input>
+        <div>CSV file with 5min OHLCV</div>
+
+        <hr><hr><hr>
+
+        <div></div>
+        <button id="start" type="button">Initialize</button>
+        <div>Click for load data and initialize charts</div>
+
+        <hr><hr><hr>
+
+        <label class="m-label" >Equity:</label>
+        <input type="file" id="icsv_eq" title="Load eq"></input>
+        <div>CSV file with equity data</div>
+
+        <label class="m-label" >Trans:</label>
+        <input type="file" id="icsv_trans" title="Load trans"></input>
+        <div>CSV file with transactions</div>
+
+
+        <hr><hr><hr>
+        <div></div>
+        <button id="save_state" type="button">SAVE</button>
+        <div>Save state</div>
+
+        <div></div>
+        <button id="restore_state" type="button">RESTORE</button>
+        <div>Restore state</div>
+
+
+      </div>
+      </p>
+    </div>
+
+
+    <div id="tf5min_items" class="hidden">
+      <div class="grid_ticker" >
+        <div></div>
+        <div></div>
+        <div class="iChart_m5 chart_ticker"></div>
+        <div class="iChart_m5i chart_ticker"></div>
+      </div>
+    </div>
+
+    <div id="tf1h_items" class="hidden">
+      <div class="grid_ticker" >
+        <div></div>
+        <div></div>
+        <div class="iChart_h1 chart_ticker" ></div>
+        <div class="iChart_h1i chart_ticker" ></div>
+      </div>
+    </div>
+
+    <div id="tf1d_items" class="hidden">
+      <div class="grid_ticker" >
+        <div></div>
+        <div></div>
+        <div class="iChart_d1 chart_ticker" ></div>
+        <div class="iChart_d1i chart_ticker" ></div>
+      </div>
+    </div>
+
+    <div id="trans_items" class="hidden">
+      </p>
+      <button id="save-trans" type="button" >Save</button>
+      <table id="trans_list" class="gridtable" style="width:1000px">
+        <thead>
+          <tr>
+           <th style="width:10px">#</th>
+           <th style="width:120px">Date</th>
+           <th style="width:40px">Mode</th>
+           <th style="width:40px">Price</th>
+           <th style="width:40px">Count</th>
+           <th style="width:40px">Sum</th>
+           <th style="width:40px">Profit</th>
+           <th style="width:40px">DrawDown</th>
+           <th style="width:100px">Comment</th>
+          </tr>
+        </thead>
+        <tbody/>
+      </table>
+    </div>
+
+    <div id="equity_items" class="hidden">
+      </p>
+      <button id="save-eq" type="button" >Save</button>
+      <table id="equity_list" class="gridtable" style="width:1000px">
+        <thead>
+          <tr>
+           <th style="width:120px">Date</th>
+           <th style="width:80px">Capital</th>
+           <th style="width:80px">DrawDown</th>
+          </tr>
+        </thead>
+        <tbody/>
+      </table>
+    </div>
+
+  </div>
+
+
+  <table class="play_block">
+    <tr>
+     <td>
+      <button id="play" type="button">Play >></button>
+     </td>
+     <td>
+      <div id="cur_date">2019-01-01 20:40:58</div>
+     </td>
+    </tr>
+  </table>
+
+  <!-- New Order -->
+<!-- <div id="order-dlg" title="New Order" style="border:1px solid black;"> -->
+  <div id="order-dlg" title="New Order">
+   <div class="grid_new_order1">
+     <label class="m-label">Mode:</label>
+     <select style="width:80px;" id="form-mode">
+       <option value="buy" class="uk-form-success">Buy</option>
+       <option value="sell" class="uk-form-danger">Sell</option>
+     </select>
+     <div></div>
+     <label class="m-label" for="form-price">Price:</label>
+     <input class="uk-input" id="form-price" type="number" >
+     <div style="display:flex;">
+       <button id="get_market" type="button" style="width:100px;">Get Market</button>
+       &nbsp;
+       <button id="get_stop" type="button" style="width:100px;">Calc Stop</button>
+     </div>
+
+     <label class="m-label" for="form-count">Count:</label>
+     <div style="display:flex;">
+        <input class="uk-input" id="form-count" type="number"style="width:100%"> 
+        <button id="calc_pos" type="button">Calc Count</button>
+     </div>
+     <div style="display:flex;">
+       <label class="m-label" for="form-summ">Sum:</label>
+       <input class="uk-input" id="form-summ" type="text" disabled>
+     </div>
+
+     <hr>
+     <hr>
+     <hr>
+
+     <label class="m-label" for="form-stop-activ">Stop&nbsp;Activation:</label>
+     <input class="uk-input" id="form-stop-activ" type="number">
+     <div id="form-risk" style="float:right;padding-right:50px;white-space:nowrap;">&nbsp;Risk = %0.5</div>
+
+     <label class="m-label" for="form-stop">Stop:</label>
+     <input class="uk-input" id="form-stop" type="number">
+     <div></div>
+
+     <hr>
+     <hr>
+     <hr>
+
+     <label class="m-label" for="form-profit-activ">Profit&nbsp;Activation:</label>
+     <input class="uk-input" id="form-profit-activ" type="number" >
+     <div></div>
+
+     <label class="m-label" for="form-profit">Profit:</label>
+     <input class="uk-input" id="form-profit" type="number">
+     <div></div>
+
+     <hr>
+     <hr>
+     <hr>
+
+     <label class="m-label" for="form-comment">Comment:</label>
+     <input class="uk-input" id="form-comment" type="text" list="comments">
+     <datalist id="comments">
+       <option value=""></option>
+     </datalist>
+     <div></div>
+
+   </div>
+  </div>
+
+
+  <!-- Edit Order -->
+  <div id="edit-order-dlg" title="Edit Order">
+   <input class="uk-input hidden" id="form-id" type="text" disabled>
+   <div class="grid_new_order1">
+     <label class="m-label">Mode:</label>
+     <select style="width:80px;" id="form-mode">
+       <option value="buy" class="uk-form-success">Buy</option>
+       <option value="sell" class="uk-form-danger">Sell</option>
+     </select>
+     <div></div>
+
+     <label class="m-label" for="form-price">Price:</label>
+     <input class="uk-input" id="form-price" type="number" >
+     <div></div>
+
+     <label class="m-label" for="form-count">Count:</label>
+     <div style="display:flex;">
+       <input class="uk-input" id="form-count" type="number"style="width:100%"> 
+       <button id="calc_pos" type="button">Calc Count</button>
+     </div>
+     <div style="display:flex;">
+       <label class="m-label" for="form-summ">Sum:</label>
+       <input class="uk-input" id="form-summ" type="text" disabled>
+     </div>
+
+     <hr>
+     <hr>
+     <hr>
+
+     <label class="m-label" for="form-comment">Comment:</label>
+     <input class="uk-input" id="form-comment" type="text" list="comments">
+     <datalist id="comments">
+       <option value=""></option>
+     </datalist>
+     <div></div>
+
+   </div>
+  </div>
+
+
+  <!-- Edit Stop Order -->
+  <div id="edit-stop-dlg" title="Edit Stop Order">
+   <input class="uk-input hidden" id="form-id" type="text" disabled>
+   <div class="grid_new_order1">
+     <label class="m-label">Mode:</label>
+     <select style="width:80px;" id="form-mode">
+       <option value="buystop" class="uk-form-success">BuyStop</option>
+       <option value="sellstop" class="uk-form-danger">SellStop</option>
+     </select>
+     <div></div>
+
+     <hr>
+     <hr>
+     <hr>
+
+     <label class="m-label" for="form-stop-activ">Stop&nbsp;Activation:</label>
+     <input class="uk-input" id="form-stop-activ" type="number">
+     <div></div>
+
+     <label class="m-label" for="form-stop">Stop:</label>
+     <input class="uk-input" id="form-stop" type="number">
+     <div></div>
+
+     <label class="m-label" for="form-stop-count">Count:</label>
+     <input class="uk-input" id="form-stop-count" type="text">
+     <div></div>
+
+     <hr>
+     <hr>
+     <hr>
+
+     <label class="m-label" for="form-profit-activ">Profit&nbsp;Activation:</label>
+     <input class="uk-input" id="form-profit-activ" type="number" >
+     <div></div>
+
+     <label class="m-label" for="form-profit">Profit:</label>
+     <input class="uk-input" id="form-profit" type="number">
+     <div></div>
+
+     <label class="m-label" for="form-profit-count">Count:</label>
+     <input class="uk-input" id="form-profit-count" type="texxt">
+     <div></div>
+
+   </div>
+  </div>
+
+
+  <!-- Order List -->
+  <div id="order-list-dlg" >
+      <div>
+        <code>Orders</code>
+        <button id="exec_drop_orders" type="button" style="margin-left:10px">Drop ALL</button>
+        <button id="exec_new_order" type="button" style="margin-left:10px">New Order</button>
+      </div>
+      <div style="height:5px;"></div>
+      <div style="height:218px; overflow: auto; border:1px solid lightgray;">
+        <table id="orders" class="gridtable">
+          <thead>
+            <tr>
+             <th style="width:30px">#</th>
+             <th style="width:10px">id</th>
+             <th style="min-width:30px">Mode</th>
+             <th style="min-width:55px">Price</th>
+             <th style="min-width:50px">Count</th>
+             <th style="width:100px">Comment</th>
+             <th style="min-width:120px">Date</th>
+            </tr>
+          </thead>
+          <tbody/>
+        </table>
+      </div>
+  </div>
+
+  <!-- Stop Order List -->
+  <div id="stop-order-list-dlg" >
+      <div>
+        <code>Stop Orders </code>
+        <button id="exec_drop_stop_orders" type="button" style="margin-left:10px">Drop ALL Stops</button>
+        <button id="exec_new_stop_order" type="button" style="margin-left:10px">New Order</button>
+      </div>
+      <div style="height:5px;"></div>
+      <div style="height:218px; overflow: auto; border:1px solid lightgray;">
+        <table id="stop_orders" class="gridtable">
+          <thead>
+            <tr>
+             <th style="width:30px">#</th>
+             <th style="width:10px">id</th>
+             <th style="width:40px">Mode</th>
+             <th style="width:40px">SL:ActPrice</th>
+             <th style="width:40px">SL:Price</th>
+             <th style="width:40px">SL:Count</th>
+             <th style="width:40px">TP:ActPrice</th>
+             <th style="width:40px">TP:Price</th>
+             <th style="width:40px">TP:Count</th>
+             <th style="min-width:120px">Date</th>
+            </tr>
+          </thead>
+          <tbody/>
+        </table>
+      </div>
+  </div>
+
+  <!-- Status -->
+  <div id="status-dlg" >
+    <div class="grid_status">
+      <button id="exec_close_all" type="button">Close&nbsp;ALL</button>
+      <div></div>
+
+      <hr><hr>
+
+      <label class="m-label" for="cp-capital">Capital:</label>
+      <input class="uk-input" id="cp-capital" type="text" disabled>
+
+      <label class="m-label" for="cp-dd">DD:</label>
+      <input class="uk-input uk-form-danger" id="cp-dd" type="text" disabled>
+
+      <hr><hr>
+
+      <label class="m-label" for="cp-cur_profit">Cur&nbsp;Profit:</label>
+      <input class="uk-input" id="cp-profit" type="text" disabled>
+         
+      <label class="m-label" for="cp-cur_pos">Cur&nbsp;Pos:</label>
+      <input class="uk-input" id="cp-cur_pos" type="text" disabled>
+
+      <label class="m-label" for="cp-cur_pos_sum">Cur&nbsp;Sum:</label>
+      <input class="uk-input" id="cp-cur_pos_sum" type="text" disabled>
+    </div>
+  </div>
+
+  <!-- Save trans -->
+  <div id="save-trans-dlg" title="Save transactions to CSV" >
+    <a id="trans-download" download="_transactions.csv">Download CSV</a>
+  </div>
+
+  <!-- Save eq -->
+  <div id="save-eq-dlg" title="Save equity to CSV" >
+    <a id="eq-download" download="_eq.csv">Download CSV</a>
+  </div>
+
+</body>
+</html>

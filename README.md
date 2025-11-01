@@ -1,2 +1,2 @@
 # Trade-Simulator
-Ыtock exchange trading terminal simulator
+Stock exchange trading terminal simulator

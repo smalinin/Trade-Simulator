@@ -1,0 +1,141 @@
+.hidden {
+    display: none;
+}
+
+div.content {
+    overflow: auto;
+    width: 99%;
+    height: 96%;
+    border: 1px solid lightgray;
+}
+
+
+div#header {
+    height: 15px;
+}
+
+ul#tabs {
+    font-size: 12px;
+    list-style-type: none;
+    margin: 10px 0 0 0;
+    padding: 0 0 0.3em 0;
+}
+
+ul#tabs li {
+    display: inline;
+}
+
+ul#tabs li a {
+    color: #42454a;
+    background-color: #dedbde;
+    border: 1px solid #c9c3ba;
+    border-bottom: none;
+    padding: 0.5em 0.5em 0 0.5em;
+    text-decoration: none;
+}
+
+ul#tabs li a:hover {
+    background-color: #f1f0ee;
+}
+
+ul#tabs li a.selected {
+    color: blue;
+    background-color: #f1f0ee;
+    font-weight: bold;
+    padding: 0.7em 0.5em 0 0.5em;
+}
+
+div.grid_ticker {
+  height: 700px;
+  display: grid;
+/*  grid-template-rows: 1px 650px; */
+  grid-template-rows: 1px 640px; 
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 5px;
+}
+
+div.grid_ticker_2K {
+  height: 1050px;
+  display: grid;
+/*  grid-template-rows: 1px 650px; */
+  grid-template-rows: 1px 990px; 
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 5px;
+}
+
+div.chart_ticker {
+  border: solid darkgray 2px;
+  position: relative; 
+  height:675px;
+}
+
+div.chart_ticker_2K {
+  border: solid darkgray 2px;
+  position: relative; 
+  height:1030px;
+}
+
+div.grid_book {
+  display: grid;
+  grid-template-rows: 1fr; /* 1fr*/
+  grid-template-columns: 550px 850px 300px;
+  grid-gap: 10px;
+}
+
+
+div.grid_new_order1 {
+  display: grid;
+  grid-template-rows: 25px; /* 1fr*/
+  grid-template-columns: 80px 2fr 2fr;
+  grid-gap: 5px;
+}
+
+div.grid_status {
+  display: grid;
+  grid-template-rows: 25px; /* 1fr*/
+  grid-template-columns: 80px 1fr;
+  grid-gap: 5px;
+}
+
+div.grid_load {
+  display: grid;
+  grid-template-rows: 25px; /* 1fr*/
+  grid-template-columns: 200px 250px 250px;
+  grid-gap: 5px;
+}
+
+
+.play_block {
+    position: absolute;
+    left: 800px;
+    top: 2px;
+}
+
+.m-label {
+/*    width: 50px;*/ /* Ширина */
+    text-align: right; /* Выравниваем по правому краю */
+    float: left; /* Выстраиваем элементы рядом */
+    margin-right: 10px; /* Расстояние от текста до текстового поля */
+    line-height: 25px; /* Выравниваем по высоте */
+   }
+
+.m-list-btn {
+  width: 20px;
+  padding: 1px 1px;
+}
+
+.noclose .ui-dialog-titlebar-close
+{
+    display:none;
+}
+
+.notitle .ui-dialog-title
+{
+    display:none;
+}
+
+.smalltitle .ui-dialog-titlebar
+{
+    height:5px;
+}
+
