@@ -495,4 +495,4 @@ The program is distributed under GPL 3.0 license
 
 ---
 
-**Version:** 1.0  
+**Version:** 1.1  
