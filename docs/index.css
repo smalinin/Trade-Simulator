@@ -63,7 +63,7 @@ div.grid_ticker_2K {
 
 div.flex_ticker {
   display:flex; 
-  height:700px; 
+  height:635px; 
   flex-direction:row; 
   gap:5px;
 }
@@ -79,7 +79,7 @@ div.flex_ticker_2K {
 div.chart_ticker {
   border: solid darkgray 2px;
   position: relative; 
-  height:690px;
+  height:625px;
 }
 
 div.chart_ticker_2K {
