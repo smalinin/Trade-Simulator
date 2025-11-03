@@ -1,5 +1,12 @@
 # Trade Simulator - Stock Exchange Trading Simulator
 
+## Running the Program
+
+1. Just Open and try - [Trade-Simulator](https://smalinin.github.io/Trade-Simulator/)
+2. The program will load with an interface containing several tabs
+
+---
+
 ## Description
 
 **Trade Simulator** is a web application for simulating stock exchange trading. The program allows you to:
@@ -13,14 +20,6 @@ p.s.
 Project uses [IguanaCharts](https://github.com/iguanaChart/iguanacharts) library for charting.
 
 ---
-
-## Running the Program
-
-1. Just Open and try - [Trade-Simulator](https://smalinin.github.io/Trade-Simulator/)
-2. The program will load with an interface containing several tabs
-
----
-
 
 ![chart1](https://raw.githubusercontent.com/smalinin/Trade-Simulator/refs/heads/main/trade1.png)
 
