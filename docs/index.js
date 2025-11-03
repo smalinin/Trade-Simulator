@@ -12,7 +12,6 @@ var g_selectedTab = null;
 
 function date2str(date) {
   const pad = (number) => number < 10 ? '0' + number : number;
-     
   const dts = date.getFullYear()+"-"+pad(date.getMonth()+1)+"-"+pad(date.getDate());
   return dts+" "+pad(date.getHours())+":"+pad(date.getMinutes())+":"+pad(date.getSeconds());
 }
@@ -28,8 +27,8 @@ function debounce(fn, delay) {
 class Market {
   constructor() {
     const localOff = (new Date()).getTimezoneOffset()/60;
-    const mskOff = 3;
-    this.tzOff = -1*localOff - mskOff;
+    this.tzOff = -1*localOff - 3;
+
     this._play = 0;
     this._save_play = 0;
     this._started = false;
@@ -39,10 +38,11 @@ class Market {
     this.lastPoints = {};
     
     this.crypto = false;
-    this.ticker = "Si";
+    this.ticker = "";
     this.ticker_decimals = 0;
-    this.iticker = "USDTOM";
+    this.iticker = "";
     this.date0 = "20190620";
+    this.date0_ts = 0;
     this.candles = null;
     this.icandles = null;
     this.candles_tf = 5;  //timeframe in MINs
@@ -440,8 +440,8 @@ class Market {
      }];
 
      $(".iChart_m5").data("iguanaChart").addTransactions(tr);
-//??     $(".iChart_h1").data("iguanaChart").addTransactions(tr);
-//??     $(".iChart_d1").data("iguanaChart").addTransactions(tr);
+     $(".iChart_h1").data("iguanaChart").addTransactions(tr);
+     $(".iChart_d1").data("iguanaChart").addTransactions(tr);
 
      this.trans.push({
        id, date:tm, mode, price, volume, profit, dd, comment
@@ -495,19 +495,17 @@ class Market {
    }
 
 
-   addNewTickerData(i, DT, dt, tm)
+   addNewTickerData(i, DT)
    {
      this.cur.id = i;
-     this.cur.dt = parseInt(dt);
-     this.cur.tm = parseInt(tm);
-
      this.cur.dt_cur = DT.dt_cur;
 
-     var open  = parseFloat(this.candles.data[i][2]);
-     var high  = parseFloat(this.candles.data[i][3]);
-     var low   = parseFloat(this.candles.data[i][4]);
-     var close = parseFloat(this.candles.data[i][5]);
-     var vol   = parseFloat(this.candles.data[i][6]);
+     const candle = this.candles[i];
+     var open  = candle.open;
+     var high  = candle.high;
+     var low   = candle.low;
+     var close = candle.close;
+     var vol   = candle.volume;
 
      if (this.candles_tf == 1) {
        this.newCandle(".iChart_m5", "M5", DT.m5, high, low, open, close, vol);
@@ -520,12 +518,11 @@ class Market {
      if (this.use_D1)
        this.newCandle(".iChart_d1", "D1", DT.d1, high, low, open, close, vol);
 
-     var dtms = (DT.m5 - this.tzOff*60*60) * 1000;
      var dt_lbl = document.querySelector('#cur_date');
-     dt_lbl.innerText = date2str(new Date(dtms));
+     dt_lbl.innerText = date2str(this.cur.dt_cur);
 
      this.cur.candle = {
-        high, low, open, close, vol, dtms
+        high, low, open, close, vol, dtms:DT.m5 * 1000
      }
 
      //calc stop
@@ -547,7 +544,7 @@ class Market {
           this.pos.D1 = dt.getTime()/1000;
         }
 
-        var dt = date2str(new Date((this.pos.D1 - this.tzOff*60*60) * 1000));
+        var dt = date2str(new Date(this.pos.D1 * 1000));
         var last_dt;
 
         if (this.equity.length > 0)
@@ -561,19 +558,17 @@ class Market {
      }
    }
 
-   addNewIndexData(i, DT, dt, tm)
+   addNewIndexData(i, DT)
    {
      this.cur.idi = i;
-     this.cur.dt = parseInt(dt);
-     this.cur.tm = parseInt(tm);
-
      this.cur.dt_cur = DT.dt_cur;
 
-     var open  = parseFloat(this.icandles.data[i][2]);
-     var high  = parseFloat(this.icandles.data[i][3]);
-     var low   = parseFloat(this.icandles.data[i][4]);
-     var close = parseFloat(this.icandles.data[i][5]);
-     var vol   = parseFloat(this.icandles.data[i][6]);
+     const candle = this.icandles[i];
+     var open  = candle.open;
+     var high  = candle.high;
+     var low   = candle.low;
+     var close = candle.close;
+     var vol   = candle.volume;
 
      if (this.candles_tf == 1) {
        this.newCandle(".iChart_m5i", "M5", DT.m5, high, low, open, close, vol);
@@ -587,7 +582,8 @@ class Market {
        this.newCandle(".iChart_d1i", "D1", DT.d1, high, low, open, close, vol);
    }
 
-   addNewPoint() {
+   addNewPoint() 
+   {
      var i = this.cur.id;
      var ii = this.cur.idi;
 
@@ -597,23 +593,20 @@ class Market {
      i++;
      ii++;
 
-     if (i >= this.candles.data.length)
+     if (i >= this.candles.length)
        return;
-     if (this.icandles && ii >= this.icandles.data.length)
+     if (this.icandles && ii >= this.icandles.length)
        return;
 
-     var dt = this.candles.data[i][0];
-     var tm = this.candles.data[i][1];
-     var DT = this.getDT(dt, tm);
+     let candle = this.candles[i];
+     let DT = this.getDT(candle.timestamp/1000);
 
-     var idt;
-     var itm;
-     var iDT;
+     let iDT;
+     let icandle = null;
 
      if (this.icandles) {
-       idt = this.icandles.data[ii][0];
-       itm = this.icandles.data[ii][1];
-       iDT = this.getDT(idt, itm);
+       icandle = this.icandles[ii];
+       iDT = this.getDT(icandle.timestamp/1000);
      }
 
      var newDT = new Date(this.cur.dt_cur.getTime());
@@ -623,11 +616,11 @@ class Market {
        newDT.setMinutes(newDT.getMinutes() + this.candles_tf);
        if (newDT.getTime() >= DT.dt_cur.getTime()) {
          found = true;
-         this.addNewTickerData(i, DT, dt, tm);
+         this.addNewTickerData(i, DT);
        }
        if (this.icandles && newDT.getTime() >= iDT.dt_cur.getTime()) {
          found = true;
-         this.addNewIndexData(ii, iDT, idt, itm);
+         this.addNewIndexData(ii, iDT);
        }
      }
 
@@ -636,16 +629,9 @@ class Market {
 
 
 
-   handleStartData(candles, chart_m5, chart_h1, chart_d1, state_i) {
-     var r = candles.data[0];
-     if (r[0].toLowerCase()!=='date' || r[1].toLowerCase() !=='time' 
-         || r[2].toLowerCase()!=='open'|| r[3].toLowerCase()!=='high'
-         || r[4].toLowerCase()!=='low'|| r[5].toLowerCase()!=='close'
-         || r[6].toLowerCase()!=='volume')
-       return null;
-
+   handleStartData(candles, chart_m5, chart_h1, chart_d1, state_i)
+   {
      var cur = {id:0, dt:0, tm:0, m5:0, h1:0, d1:0, candle:null};
-
      var t_m5 = {
           dt: 0,  hloc: [], vl: [], xSeries: [],
           open:0, high:0, low:0, close:0, vol:0
@@ -659,35 +645,28 @@ class Market {
           open:0, high:0, low:0, close:0, vol:0
      };
 
-
-     for(var i=1; i < candles.data.length; i++) 
+     for(var i=0; i < candles.length; i++)
      {
-       if (candles.data[i].length<=1)
-         break;
-
-       var dt    = candles.data[i][0];
-       var tm    = candles.data[i][1];
+       const candle = candles[i];
 
        if (state_i) {
          if (i > state_i)
            break;
        } else {
-         if (dt >= this.date0)
+         if (candle.timestamp >= gm.date0_ts)
            break;
        }
 
        cur.id = i;
-       cur.dt = parseInt(dt);
-       cur.tm = parseInt(tm);
 
-       var DT = this.getDT(dt, tm);
+       var DT = this.getDT(candle.timestamp/1000);
        cur.dt_cur = DT.dt_cur;
 
-       var open = parseFloat(candles.data[i][2]);
-       var high = parseFloat(candles.data[i][3]);
-       var low  = parseFloat(candles.data[i][4]);
-       var close = parseFloat(candles.data[i][5]);
-       var vol  = parseFloat(candles.data[i][6]);
+       var open = candle.open;
+       var high = candle.high;
+       var low  = candle.low;
+       var close = candle.close;
+       var vol  = candle.volume;
 
        if (this.candles_tf == 1) {
          /// gen 1h
@@ -754,7 +733,7 @@ class Market {
      if (this.use_D1)
        $(chart_d1).data("iguanaChart").showIndicators();
 
-     var dtms = (t_m5.dt - this.tzOff*60*60) * 1000;
+     var dtms = t_m5.dt * 1000;
 
      cur.candle = {
         high: t_m5.high, low:t_m5.low, open:t_m5.open, close:t_m5.close, vol:t_m5.vol, dtms
@@ -776,9 +755,8 @@ class Market {
        this.cur = cur;
        this.pos.D1 = this.cur.d1;
 
-       var dtms = (cur.m5 - this.tzOff*60*60) * 1000;
        var dt_lbl = document.querySelector('#cur_date');
-       dt_lbl.innerText = date2str(new Date(dtms));
+       dt_lbl.innerText = date2str(this.cur.dt_cur);
 
        //--$(".iChart_m5").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_H1&i2_TimePeriod=7&&i3=EMA_H1&i3_TimePeriod=14&i4=EMA_D1&i4_TimePeriod=7&&i5=EMA_D1&i5_TimePeriod=14&");
        //--$(".iChart_h1").data("iguanaChart").setIndicators("&i0=EMA&i0_TimePeriod=7&&i1=EMA&i1_TimePeriod=14&i2=EMA_D1&i2_TimePeriod=7&&i3=EMA_D1&i3_TimePeriod=14&");
@@ -815,7 +793,6 @@ class Market {
        this._started = true;
      }
    }
-   
 
 
    pushData(data)
@@ -871,25 +848,16 @@ class Market {
      return result;
    }
 
-   getDT(dt, tm)
+   getDT(timestamp_sec)
    {
      try{
-       var d_y = parseInt(dt.substr(0,4));
-       var d_m = parseInt(dt.substr(4,2));
-       var d_d = parseInt(dt.substr(6,2));
-       var d_hh = parseInt(tm.substr(0,2));
-       var d_mm = parseInt(tm.substr(2,2));
-
-       var d_m5 = Math.trunc(d_mm/5)*5;
-
-       var d_val_m5  = (new Date(d_y, d_m-1, d_d, d_hh+this.tzOff, d_m5)).getTime()/1000;
-       var d_val_h1  = (new Date(d_y, d_m-1, d_d, d_hh+this.tzOff, 0)).getTime()/1000;
-       var d_val_d1  = (new Date(d_y, d_m-1, d_d, 0+this.tzOff, 0)).getTime()/1000;
-       var dt_cur = new Date(d_y, d_m-1, d_d, d_hh, d_mm);
-//       var dt_next = new Date(d_y, d_m-1, d_d, d_hh+this.tzOff, d_mm);
-//       dt_next.setMinutes(dt_next.getMinutes() + this.candles_tf);
-//       return {m5: d_val_m5, h1: d_val_h1, d1: d_val_d1, dt_next, dt_cur:d_val_m5};
-       return {m5: d_val_m5, h1: d_val_h1, d1: d_val_d1, dt_cur};
+       const timestamp_sec_off = timestamp_sec + this.tzOff*60*60;
+       const v5 = Math.floor(timestamp_sec / 300) * 300;
+       const v5m = Math.floor(timestamp_sec_off / 300) * 300;
+       const v1h = Math.floor(timestamp_sec_off / 3600) * 3600;
+       const v1d = Math.floor(timestamp_sec_off / 86400) * 86400;
+       return {m5: v5m, h1: v1h, d1: v1d, dt_cur: new Date(v5*1000)};
+  
      } catch(e) {
        console.log(e);
      }
@@ -1653,42 +1621,26 @@ class MarketUI {
      if (evt.target.files.length > 0) {
        var name = evt.target.files[0].name.split(".");
        document.querySelector('#l-ticker').value = name[0];
-       Papa.parse(evt.target.files[0], {
-         complete: function(results) {
-
-           var r = results.data[0];
-           if (r[0].toLowerCase()!=='date' || r[1].toLowerCase() !=='time' 
-               || r[2].toLowerCase()!=='open'|| r[3].toLowerCase()!=='high'
-               || r[4].toLowerCase()!=='low'|| r[5].toLowerCase()!=='close'
-               || r[6].toLowerCase()!=='volume'){
-             alert("Wrong data format in CSV FILE.\n Must be 'date  time  open  high  low  close  volume'\n with Candle open time.");
-             return;
-           }
-
+       const loader = new CandleLoader({ dataTZ: 'local', outputTZ: 'local' });
+       loader.loadFromFile(evt.target.files[0]).then((results) => {
+          //  console.log("Candles loaded:", results);
            gm.candles = results;
-         }
+       }).catch((err) => {
+           console.log("Error loading candles:", err);
        });
-     }                             
+     }
    }
 
    handleLoad_i5min(evt) {
      if (evt.target.files.length > 0) {
        var name = evt.target.files[0].name.split(".");
        document.querySelector('#l-iticker').value = name[0];
-       Papa.parse(evt.target.files[0], {
-         complete: function(results) {
-
-           var r = results.data[0];
-           if (r[0].toLowerCase()!=='date' || r[1].toLowerCase() !=='time' 
-               || r[2].toLowerCase()!=='open'|| r[3].toLowerCase()!=='high'
-               || r[4].toLowerCase()!=='low'|| r[5].toLowerCase()!=='close'
-               || r[6].toLowerCase()!=='volume'){
-             alert("Wrong data format in CSV FILE.\n Must be 'date  time  open  high  low  close  volume'\n with Candle open time.");
-             return;
-           }
-
+       const loader = new CandleLoader({ dataTZ: 'local', outputTZ: 'local' });
+       loader.loadFromFile(evt.target.files[0]).then((results) => {
+          //  console.log("Candles loaded:", results);
            gm.icandles = results;
-         }
+       }).catch((err) => {
+           console.log("Error loading candles:", err);
        });
      }
    }
@@ -1728,7 +1680,7 @@ class MarketUI {
              }
 
              gm.trans_init.push({
-               id:_id, date:_Date, mode:_Mode, price:_Price, volume:_Count, 
+               id:_id, date:_Date, mode:_Mode, price:_Price, volume:_Count,
                profit:_Profit, dd:_DD, comment:_Comment
              });
            }
@@ -1847,6 +1799,8 @@ class MarketUI {
        alert("Wrong Start date");
        return;
      }
+     const dt_str  = gm.date0.substring(0,4) + "-" + gm.date0.substring(4,6) + "-" + gm.date0.substring(6,8);
+     gm.date0_ts = (new Date(dt_str + "T00:00:00")).getTime();
 
      gm._timeout = parseInt(document.querySelector('#l-timeout').value);
      if (isNaN(gm._timeout) || gm._timeout < 5){
@@ -1857,11 +1811,6 @@ class MarketUI {
      gm.ticker = document.querySelector('#l-ticker').value;
      if (gm.ticker.length < 1){
        alert("Empty Ticker name");
-       return;
-     }
-     gm.iticker = document.querySelector('#l-iticker').value;
-     if (gm.iticker.length < 1){
-       alert("Empty Index Ticker name");
        return;
      }
 
@@ -1916,6 +1865,7 @@ class MarketUI {
 
    saveState()
    {
+     const dt_cur = gm.cur?.dt_cur;
      var state = { 
                    _timeout: gm._timeout,
                    use_D1: gm.use_D1,
@@ -1923,7 +1873,8 @@ class MarketUI {
 
                    ticker: gm.ticker,
                    iticker: gm.iticker,
-                   date0: gm.cur.dt,
+                   date0: dt_cur ? new Date(dt_cur.getFullYear(), dt_cur.getMonth(), dt_cur.getDate()) : gm.date0,
+                   date0_ts: dt_cur ? dt_cur.getTime() : 0,
                    candles: gm.candles,
                    icandles: gm.icandles,
                    candles_tf: gm.candles_tf,
@@ -2050,6 +2001,7 @@ class MarketUI {
              gm.ticker = state.ticker;
              gm.iticker = state.iticker;
              gm.date0 = state.cur?.dt || state.date0;
+             gm.date0_ts = state.date0_ts;
              gm.candles = state.candles;
              gm.icandles = state.icandles;
              gm.candles_tf = state.candles_tf;
