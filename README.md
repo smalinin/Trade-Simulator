@@ -82,14 +82,12 @@ This is the main tab for initializing the program. Here you configure trading pa
     20161017;1010;65297,0000000;65313,0000000;65290,0000000;65302,0000000;29
     20161017;1015;65328,0000000;65328,0000000;65325,0000000;65325,0000000;50
     ```
-  - **Field Descriptions:**
-    - **DATE** — date in YYYYMMDD format (e.g., 20161017)
-    - **TIME** — time in HHMM format (e.g., 1000 = 10:00, 1005 = 10:05)
-    - **OPEN** — candle opening price (with comma as decimal separator)
-    - **HIGH** — candle maximum price
-    - **LOW** — candle minimum price
-    - **CLOSE** — candle closing price
-    - **VOLUME** — trading volume
+    or
+    ```
+    Datetime,Open,High,Low,Close,Volume
+    2024.11.01 00:00,2521.71,2522.3,2516.22,2520.1,3779.23
+    2024.11.01 00:05,2520.1,2521.59,2517.48,2519.61,1910.82
+    ```
 
 #### Indicator Ticker (Additional)
 
