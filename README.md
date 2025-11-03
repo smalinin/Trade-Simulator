@@ -122,12 +122,6 @@ This is the main tab for initializing the program. Here you configure trading pa
     2016-12-13 10:05:00,1000100,0
     ...
     ```
-    or
-    ```
-    Datetime,Open,High,Low,Close,Volume
-    2024.11.01 00:00,2521.71,2522.3,2516.22,2520.1,3779.23
-    2024.11.01 00:05,2520.1,2521.59,2517.48,2519.61,1910.82
-    ```
 
 - **Trans** — load CSV file with previous transactions
   - Helps restore previous trading
@@ -364,9 +358,13 @@ Table of capital change history:
    20161017;1010;65297,0000000;65313,0000000;65290,0000000;65302,0000000;29
    20161017;1015;65328,0000000;65328,0000000;65325,0000000;65325,0000000;50
    ```
+    or
+    ```
+    Datetime,Open,High,Low,Close,Volume
+    2024.11.01 00:00,2521.71,2522.3,2516.22,2520.1,3779.23
+    2024.11.01 00:05,2520.1,2521.59,2517.48,2519.61,1910.82
+    ```
 3. **Important Points:**
-   - Field separator: **semicolon (;)**
-   - Decimal separator for prices: **comma (,)**
    - Dates must be in ascending order
    - Time must correspond to timeframe (10:00, 10:05, 10:10, etc. for 5min)
 
